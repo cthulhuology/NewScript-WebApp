@@ -10,18 +10,18 @@ let('Storage',{
 	init: function() {
 	},
 	store: function(k,v) {
-		v.post(document.location.href.path() + 'store/' + Channel.channel + '/' + k + '/' + today());
+		v.post('store/' + Channel.channel + '/' + k + '/' + today());
 		return v;
 	},	
 	load: function(k) {
-		get(document.location.href.path() + 'public/' + Channel.channel + '/' + k + '.json', function(txt) { if (txt) return let(k,txt.unjson()); alert("Failed to load " + k); });
+		get('object/' +Channel.channel + '/' +  k, function(txt) { if (txt) return let(k,txt.unjson()); alert("Failed to load " + k); });
 	},
-	fetch: function(k) {
-		get(document.location.href.path() + 'public/' + Channel.channel + '/' + k + '.json', function(txt) { 
+	fetch: function(k,v) {
+		get('object/' + Channel.channel + '/' + k , function(txt) { 
 			if (!txt) return;
-			Definitions[k] = txt.unjson(); 
-			return (Definitions[k]._language == "Newscript") ? Newscript.load(k): 
-				(Definitions[k]._language == "Javascript") ? Javascript.load(k):
+			Definitions[v] = txt.unjson(); 
+			return (Definitions[v]._language == "Newscript") ? Newscript.load(v): 
+				(Definitions[v]._language == "Javascript") ? Javascript.load(k):
 				null;
 		 });
 	},

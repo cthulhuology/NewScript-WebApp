@@ -1,0 +1,11 @@
+* cmd-o go to Origin                                                                                                                    
+* cmd-i go to Inventory                                                                                                                    
+* cmd-l go to Lexicon                                                                                                                    
+* cmd-m go to Memory Display                                                                                                                    
+* cmd-h go to Help Page                                                                                                                    
+* cmd-j go to Javascript Scratchpad                                                                                                                   
+* cmd-n go to Newscript Timeline                                                                                                                   
+* [down to right]  new text box                                                                                                                   
+* [down to left]  new definition                                                                                                                   
+* [up to left or right] cut                                                                                                                   
+

@@ -5,37 +5,37 @@
 //
 
 var Definitions = {};
+var Sources = {};
 
-let('Source', Widget, {
-	icon: Image.init('ns.png'),
-	init: function(n) {
-		var s = Source.clone();
-		s.draw = function() {
-			if (! this.visible) return;
-			Screen.as(this).draw(this.icon);
-			Screen.to(-this.label.length*8+24,this.h).print(this.label);
-		};
-		s.label = n;
-		s.onMouse('down');
+let('Source', Button, {
+	icon: function(v) {
+		var s = this.init('/images/ns.png',v.title);
+		s.id = v.id;
 		return s;
 	},
 	down: function(e) {
 		if (this.hit(e)) 
-			Storage.fetch(this.label);
+			Storage.fetch(this.id,this.label);
 	},
 });
 
 let('Inventory',{
 	icons: [],
 	load: function() {
+		Sources = {};
 		Inventory.icons.every(function(v,i) { v.release(); });
 		Inventory.icons = [];
-		get(document.location.href.path() + 'objects/' + Channel.channel + '/', function(txt) {
+		get('objects/' + Channel.channel, function(txt) {
+			if (!txt) return;
 			var o = txt.unjson();	
 			var b = Box.init().at(16050,16050).by(48,48);
 			var wc = Math.floor((Display.w-100) / 200);
 			o.every(function(v,i) {
-				Inventory.icons.push(Source.init(v).as(b));
+				if (Sources[v.title]) 
+					return Sources[v.title].id = v.id;
+				var s = Source.icon(v).as(b);
+				Inventory.icons.push(s);
+				Sources[v.title] = s;
 				b.to((i+1) % wc ? 200 : -1000, (i+1) % wc ? 0 : 100);
 			});
 		});

@@ -17,8 +17,10 @@ let('Button',Widget,{
 		return i.instance();
 	},	
 	draw: function() {
+		if (!this.visible) return;
 		Screen.as(this).draw(this.img);
-		if (this.label) Screen.as(this).to(this.w/2-(this.label.length*16),this.h/2).font("16ptGrayItalic.png").print(this.label);
+		if (this.label) 
+			Screen.as(this).to(this.w/2-(this.label.length*8),this.h).font("/images/16ptGrayItalic.png").print(this.label);
 	},
 	down: function(e) { },
 	move: function(e) { },

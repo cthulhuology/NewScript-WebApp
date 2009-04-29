@@ -7,7 +7,7 @@
 let('Text',Widget,{
 	_default: "some text",
 	data: null,
-	fonttype: "16ptBlack.png",
+	fonttype: "/images/16ptBlack.png",
 	colorizer: false,
 	active: false,
 	frame: false,
@@ -110,7 +110,7 @@ let('Text',Widget,{
 	define: function() { }, // Do nothing, we don't define text blocks
 	transmit: function() {
 		var msg = { msg: this.clean().content(), from: Editor.user.name, date: today() };
-		msg.send(Editor.user.name,Channel.channel);
+		msg.send(Channel.channel);
 		this.data = [""];
 	},
 });

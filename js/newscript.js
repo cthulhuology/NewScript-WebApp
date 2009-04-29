@@ -13,6 +13,8 @@ function defed(x) {
 }
 
 var NSDefinitions = {};
+var NSStored = {};
+
 let('Newscript',Widget,{
 	tos: 0,
 	nos: 0,
@@ -86,12 +88,12 @@ let('Newscript',Widget,{
 	empty:  Box.init().at(400,50),
 	lexicon: {},
 	evaluator: function(txt) {
-		var code = txt.clean().content();
-		var words = code.split(/\s+/);
+		var words = txt.clean().data;
 		NS.ip = NS.free;
-		for (var i = 0; i < words.length; ++i) 
-			if (words[i] != "" && words[i] != null)
-				NS.mem[NS.ip++] = words[i];
+		words.every(function(v,i) {
+			if (v != "" && v != null)
+				NS.mem[NS.ip++] = v
+		});
 		NS.mem[NS.ip] = null; // nullify the last field in memory
 		NS.ip = NS.free;
 		while (NS.ip >= 0) {
@@ -125,8 +127,33 @@ let('Newscript',Widget,{
 		NS.mem = [];	
 		NS.ip = 0;
 	},
-	define: function(def) {
+	json: function(def) {
+		if (!def.title) return {};
 		var js = { _language: "Newscript",  _comments: {} };
+		def.walk(function(d) {	
+			js[d.verb.clean().content()] = d.code.clean().content();
+			js._comments[d.verb.clean().content()] = d.comment.clean().content();
+		});
+		return js;
+	},
+	diff: function(ja,jb) {
+		var retval = false;
+		ja.each(function(v,k) { if (jb[k] != v) return retval = true });
+		jb.each(function(v,k) { if (ja[k] != v) return retval = true });
+		return retval;
+	},
+	store: function(def) {
+		if (!def.title) return;
+		var name = def.title.clean().content();
+		var js = NS.json(def);
+		if (NSStored[name] && !NS.diff(js,NSStored[name])) return;
+		Storage.store(name,js);	
+		var msg = { msg: "[" + name + "]", from: "[Saved]" };
+		msg.send(Channel.channel);
+		Inventory.load();
+		NSStored[name] = js;
+	},
+	define: function(def) {
 		var name = false;
 		var obj = NS.free;
 		var slot = 2;
@@ -134,32 +161,24 @@ let('Newscript',Widget,{
 			name = def.title.clean().content();
 			NS.lexicon[name] = { _address: NS.free };
 			NS.mem[obj] = name;
-			for (var d = def; d; d = d.sibling) {
+			def.walk(function(d) {
 				NS.mem[obj+(slot++)] = d.verb.clean().content();
 				NS.mem[obj+1+(slot++)] = 0;
-			}
+			});
 			NS.free += (NS.mem[obj+1] = slot);
 		}
 		slot = 2;
-		for (var d = def; d; d = d.sibling) {
-			js[d.verb.content] = d.code.clean().content();
-			js._comments[d.verb.content] = d.comment.clean().content();
+		def.walk(function(d) {
 			NS.mem[obj + slot + 1] = NS.free;
 			slot += 2;
-			NS.lexicon[name][d.verb.content] = NS.free;
-			var words = d.code.content.split(/\s+/);
-			for (var i = 0; i < words.length; ++i) 
-				if (words[i] != "" && words[i] != null) 
-					NS.mem[NS.free++] = words[i];
-		}
+			NS.lexicon[name][d.verb.content()] = NS.free;
+			var words = d.code.data;
+			words.every(function(v,i) {
+				if (v != "" && v != null) 
+					NS.mem[NS.free++] = v;
+			});
+		});
 		NS.mem[NS.free++] = '.'; // Add a default return in case the object dropped . at the end
-		if (name) {
-			Storage.store(name,js);	
-			var msg = { msg: "[" + name + "]", from: "[Saved]" };
-			msg.send(Editor.user.name,Channel.channel);
-			Inventory.load();
-		}
-		
 		// Editor.latest = null;
 	},
 	compiler: function(txt) {
@@ -170,9 +189,9 @@ let('Newscript',Widget,{
 		Firth.download();
 	},
 	compile: function(def) {
-		var name = def.title.content;
+		var name = def.title.clean().content();
 		var obj = {};
-		def.walk(function(d) { obj[d.verb.content.clean().content()] = d.code.content.clean().data });
+		def.walk(function(d) { obj[d.verb.clean().content()] = d.code.clean().data });
 		Firth.compile(name,obj);
 	},
 	x: 0,
@@ -183,7 +202,7 @@ let('Newscript',Widget,{
 	draw: function() {
 		if (! this.visible) return;
 		this.at(0,50).by(400,260);
-		Screen.as(this).gray().frame().font("16ptGrayItalic.png");
+		Screen.as(this).gray().frame().font("/images/16ptGrayItalic.png");
 		Screen.at(this.x,this.y-25).print("Newscript VM");
 		Screen.at(this.x+10,this.y+20).print("tos:" + defed(NS.tos)).to(40,0).print("utl:" + defed(NS.utl));
 		Screen.at(this.x+10,this.y+40).print("nos:" + defed(NS.nos)).to(40,0).print("cnt:" + defed(NS.cnt));
@@ -198,20 +217,20 @@ let('Newscript',Widget,{
 	},
 	colorizer: function(t) {
 		var re = /^\d+$/;
-		Screen.font("16ptRed.png");
-		if (re.exec(t)) Screen.font("16ptBlue.png");
-		if (NS.opcodes[t]) Screen.font("16ptOrange.png");
-		if (NS.lexicon[t]) Screen.font("16ptBlack.png");
+		Screen.font("/images/16ptRed.png");
+		if (re.exec(t)) Screen.font("/images/16ptBlue.png");
+		if (NS.opcodes[t]) Screen.font("/images/16ptOrange.png");
+		if (NS.lexicon[t]) Screen.font("/images/16ptBlack.png");
 		if (NS.lexicon.any(function(x,z) {
 			if (x.any(function(v,k) {
 				if (k == t) return true;
 			})) return true;
 			return false;
-		})) Screen.font("16ptGreen.png");
+		})) Screen.font("/images/16ptGreen.png");
 	},
 	load: function(n) {
 		if (NSDefinitions[n]) 
-			return Screen.dim.at(50-NSDefinitions[n].x,50-NSDefinitions[n].y);
+			return Display.at(50-NSDefinitions[n].x,50-NSDefinitions[n].y);
 		var o = Definitions[n];
 		NS.empty.by(400,o.slots*40);
 		while(Screen.overlaps(NS.empty)) NS.empty.to(20,0);
@@ -228,7 +247,8 @@ let('Newscript',Widget,{
 			d.resize();
 			b.as(d);
 		});
-		Screen.dim.at(50-NS.empty.x,50-NS.empty.y); // Jump to loaded definition
+		Display.at(50-NS.empty.x,50-NS.empty.y); // Jump to loaded definition
+		NSStored[n] = NS.json(NSDefinitions[n]);
 	},
 });
 
@@ -240,7 +260,7 @@ let('Memory',Widget, {
 	init: function() { return this.instance() },
 	draw: function() {
 		if (!NS.visible) return;
-		Screen.as(this).frame().font("16ptGrayItalic.png");
+		Screen.as(this).frame().font("/images/16ptGrayItalic.png");
 		Screen.at(this.x,this.y-25).print("Newscript Memory @ " + defed(NS.ip));
 		var off = NS.ip / 128;
 		for (var i = 0; i < 32; ++i) 
@@ -254,31 +274,31 @@ let('Lexicon',Widget, {
 	y: 50,
 	w: 300,
 	h: 660,
-	compile: Image.init('compile.png'),
-	reset:  Image.init('reset.png'),
+	compile: Image.init('/images/compile.png'),
+	reset:  Image.init('/images/reset.png'),
 	init: function() {
 		this.onMouse('down');
 		return this.instance();
 	},
 	down: function(e) {
 		if (Box.init().as(this).to(0,this.h).by(100,30).hit(e)) return NS.reset();
-		if (Box.init().as(this).to(this.x-100,this.h).by(100,30).hit(e)) return NS.compileLexicon();
+		if (Box.init().as(this).to(this.w-100,this.h).by(100,30).hit(e)) return NS.compileLexicon();
 	},
 	draw: function() {
 		if (!NS.visible) return;
 		var slots = 0;
 		NS.lexicon.each(function(v,k) { slots += 1 + v.slots() });
 		this.at(-320,50).by(300,20 + slots * 20);
-		Screen.as(this).to(0,-25).font("16ptGrayItalic.png").print("Current Lexicon:");
+		Screen.as(this).to(0,-25).font("/images/16ptGrayItalic.png").print("Current Lexicon:");
 		Screen.as(this).frame().to(0,this.h).by(100,30).draw(this.reset).to(this.w-100,0).draw(this.compile);
 		var i = 0;
 		NS.lexicon.each(function(v,k) {
-			Screen.font("16ptBlack.png").at(this.x+10,this.y+i*20+10).print(k);
-			Screen.font("16ptBlue.png").at(this.x+220,this.y+i*20+10).print(""+v._address);
+			Screen.as(Lexicon).font("/images/16ptBlack.png").to(10,i*20+10).print(k);
+			Screen.as(Lexicon).font("/images/16ptBlue.png").to(220,i*20+10).print(""+v._address);
 			++i;
 			v.each(function(vv,kk) {
-				Screen.font("16ptGreen.png").at(this.x+30,this.y+i*20+10).print(kk);
-				Screen.font("16ptBlue.png").at(this.x+220,this.y+i*20+10).print(""+vv);
+				Screen.font("/images/16ptGreen.png").as(Lexicon).to(30,i*20+10).print(kk);
+				Screen.font("/images/16ptBlue.png").as(Lexicon).to(220,i*20+10).print(""+vv);
 				++i;
 			});
 		});

@@ -83,7 +83,7 @@ let('Editor',Widget, {
 		this.selected = [];
 		this.definitions.any(function(t,z) {
 			for (var d = t; d; d = d.sibling) 
-				if (d.isa(Box) && d.hit(b)){
+				if (typeof(d.hit) == "function" && d.hit(b)){
 					t.walk(function(x) { Editor.selected.push(x) });
 					return true;
 				}
@@ -119,6 +119,7 @@ let('Editor',Widget, {
 				(e.key == "z") ? Screen.widgets.pop():		// Undo
 				(e.key == "d") ? this.selected[0].define():	// Define
 				(e.key == "x") ? this.selected[0].transmit():	// Transmit
+				(e.key == "c") ? Channel.hide():		// Hide Channel
 			null;
 		}	
 	},
@@ -155,22 +156,6 @@ let('Editor',Widget, {
 		if (this.w < 20 || this.h < 20) return;
 		Text.init().as(this).colorize(Newscript.colorizer);
 		return this;
-	},
-	online: function() {
-		if (this.user.name) get('online/' + this.user.name + '/', function(txt) {
-			if (!txt) return;
-			Editor.users.every(function(u,i) { u.release() });
-			Editor.users = [];
-			var u = txt.unjson();
-			u.every(function(u,i) {
-				Editor.users.push(User.init(u,i));
-			});
-		});
-	},
-	timer: function() {
-		++Editor.count;
-		if (! Editor.count % (3600 * Screen.delay))
-			this.online();	
 	},
 });
 

@@ -16,7 +16,7 @@ let('Screen', Box, {
 	timer: null,
 	timers: [],
 	rad: 5,
-	fontImage: Image.init('16ptBlack.png').by(20,20),
+	fontImage: Image.init('/images/16ptBlack.png').by(20,20),
 	colorizer: false,
 	hack: navigator.userAgent.indexOf('Firefox') > 0,
 	init: function(e) {

@@ -51,10 +51,16 @@ Object.prototype.let = function(n) {
 	return o;
 }
 
+Object.prototype.can = function(k) {
+	if (typeof(this[k]) == "function") return true;
+	return false;
+}
+
 Object.prototype.isa = function(x) {
 	var retval = true;
+	var $self = this;
 	x.each(function(v,k) {
-		if (!this.hasOwnProperty(k))
+		if (x.can(k) && !$self.can(k)) 
 			return retval = false;
 	});
 	return retval;
@@ -199,8 +205,8 @@ Object.prototype.download = function() {
 	document.location.href = "data:application/json," + escape(this.json());
 }
 
-Object.prototype.send = function(user,channel) {
-	this.post(document.location.href.path() + 'channel/' + channel + '/' + user + '/', function(txt) {
+Object.prototype.send = function(channel) {
+	this.post(document.location.href.path() + 'channel/' + channel, function(txt) {
 		Channel.load();
 	});
 }
