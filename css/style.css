@@ -1,0 +1,85 @@
+body {
+	font: 14px/16px Trebuchet MS,Arial, sans-serif,Tahoma;
+}
+
+a { 
+	color: red; 
+	text-decoration: none 
+}
+
+h3 { 
+	font: bold 28px Trebuchet MS,Arial, sans-serif,Tahoma;
+	margin-top:4px;
+}
+
+h4 { 
+	text-align: center;
+	font: bold 18px Trebuchet MS,Arial, sans-serif,Tahoma;
+}
+
+h5 {
+	text-align: center;
+	font: bold 12px Trebuchet MS,Arial, sans-serif,Tahoma;
+}
+
+dd {
+	padding-bottom: 1em;
+}
+
+li { padding-bottom: 0.5em; }
+
+div {
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	border: 1px solid #808080;
+}
+
+#sidebar {
+	position: absolute;
+	top: 25px;
+	left: 25px;
+	width: 200px;
+}
+
+#title {
+	position: absolute;
+	top: 25px;
+	left: 250px;
+	height: 80px;
+	width: 500px;
+	text-align: center;	
+}
+
+#content {
+	position: absolute;
+	top: 120px;
+	left: 250px;
+	width: 500px;
+	padding: 0.5em;	
+}
+
+#screenshots {
+	position: absolute;
+	top: 25px;
+	left: 800px;
+	width: 96px;
+	padding: 0.5em;	
+	text-align: center;
+	background-color: #cccccc;
+}
+
+img { 
+	padding-bottom: 1em;
+	border: 0;
+}
+
+#canvas {
+	display: none;
+	position: absolute;
+	padding: 20px;
+	top: 25px;
+	left: 25px;
+	height: 740px;
+	width: 740px;
+	background-color: #cccccc;
+}

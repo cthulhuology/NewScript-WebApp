@@ -1,0 +1,75 @@
+<html>
+<head>
+<title>NewScript.org</title>
+<link rel="stylesheet" type="text/css" href="/css/style.css" />
+<script language="javascript">
+function $(x) {
+	return x == document ? document :  document.getElementById(x);
+}
+
+Object.prototype.request = function(cb) {
+	this._request = XMLHttpRequest ? new XMLHttpRequest(): window.createRequest();
+	this._request.onreadystatechange = function () {
+		if (this.readyState != 4 || typeof(cb) != "function") return;
+		if (this.status == 404) cb(null);
+		if (this.status == 200) cb(this.responseText);
+	};
+	return this._request;
+}
+
+Object.prototype.get = function(url,cb) {
+	this.request(function(txt) {
+		if (typeof(cb) == "function") 
+			cb(txt);
+	});
+	this._request.open("GET",url,true);
+	this._request.send("");
+};
+
+
+function show(x) {
+	$('canvasImg').onload = function () {
+		$('canvas').style.width = $('canvasImg').width;	
+		$('canvas').style.height = $('canvasImg').height;	
+		$('canvas').style.display = "block";
+	};
+	$('canvasImg').src = '/images/' + x;
+}
+
+function hide() {
+	$('canvas').style.display = "none";
+}
+
+Element.prototype.include = function(x) {
+	var $self = this;
+	get(x,function(txt) { $self.innerHTML = txt  });
+}
+
+function goto(x) {
+	$('content').include('/html/' + x + '.html');
+}
+
+function initpage() {
+	$('sidebar').include('sidebar.html');
+	$('screenshots').include('screenshots.html');
+	goto('home');
+}
+</script>
+</head>
+<body onload="initpage()">
+<!-- sidebar -->
+<div id="sidebar"></div>
+<!-- title  -->
+<div id="title">
+<h3>NewScript.org</h3>
+<h5>Copyright &copy; 2009 David J. Goehrig &lt;dave@nexttolast.com&gt;</h5>
+</div>
+<!-- content -->
+<div id="content"></div></div>
+<!-- screen shots -->
+<div id="screenshots"></div>
+<!-- footer -->
+<!-- canvas -->
+<div id="canvas"><a href="javascript:hide()"><img id="canvasImg" src="Login.png"></a></div>
+</body>
+</html>

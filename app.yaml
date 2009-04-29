@@ -1,0 +1,26 @@
+application: newscript
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+- url: /css
+  static_dir: css
+
+- url: /images
+  static_dir: images
+
+- url: /icons
+  static_dir: icons
+
+- url: /js
+  static_dir: js
+
+- url: /html
+  static_dir: html
+
+- url: /welcome/
+  script: welcome.py
+
+- url: /.*
+  script: main.py
