@@ -19,8 +19,9 @@ handlers:
 - url: /html
   static_dir: html
 
-- url: /welcome/
-  script: welcome.py
+- url: /favicon.ico
+  static_files: images/favicon.ico
+  upload: images/favicon.ico
 
 - url: /.*
   script: main.py

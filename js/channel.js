@@ -47,8 +47,8 @@ let('Channel',Widget,{
 		Channel.messages.every(function(m,i) {
 			if (i < Channel.offset) return;
 			if (!m || !m.from || !m.msg) return;
-			Screen.font("/images/16ptBlackBold.png").print(m.from + ":");
-			Screen.by(Screen.w-m.from.length*20-20,Screen.h).font("/images/16ptGrayItalic.png").print(m.msg);
+			Screen.font("/images/16ptBlackBold.png").print(m.from + ":").to(-m.from.length*16,20);
+			Screen.by(Screen.w-40,Screen.h).font("/images/16ptGrayItalic.png").print(m.msg);
 			Screen.at(Display.w-Display.x-400,Screen.y-Display.y+20).by(340,230);
 			if (Screen.y > 295) ++Channel.offset
 		});

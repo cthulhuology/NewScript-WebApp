@@ -221,7 +221,10 @@ let('Newscript',Widget,{
 		Screen.font("/images/16ptRed.png");
 		if (re.exec(t)) Screen.font("/images/16ptBlue.png");
 		if (NS.opcodes[t]) Screen.font("/images/16ptOrange.png");
-		if (NS.lexicon[t]) Screen.font("/images/16ptBlack.png");
+		if (NS.lexicon[t]) {
+			Screen.font("/images/16ptBlack.png");
+			NS.word = t;
+		}
 		if (NS.lexicon.any(function(x,z) {
 			if (x.any(function(v,k) {
 				if (k == t) return true;

@@ -30,13 +30,16 @@ let('Inventory',{
 			var o = txt.unjson();	
 			var b = Box.init().at(16050,16050).by(48,48);
 			var wc = Math.floor((Display.w-100) / 200);
+			var j = 0;
 			o.every(function(v,i) {
-				if (Sources[v.title]) 
+				if (Sources[v.title]) {
 					return Sources[v.title].id = v.id;
+				}
 				var s = Source.icon(v).as(b);
 				Inventory.icons.push(s);
 				Sources[v.title] = s;
-				b.to((i+1) % wc ? 200 : -1000, (i+1) % wc ? 0 : 100);
+				b.to((j+1) % wc ? 200 : -1000, (j+1) % wc ? 0 : 100);
+				++j;
 			});
 		});
 	},	

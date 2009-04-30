@@ -60,11 +60,11 @@ let('Editor',Widget, {
 		this.mousex = e.x; this.mousey = e.y;
 		if (this.mouseb)
 			this.mode = (e.x > this.x && e.y > this.y ) ? 
-				 ( Keyboard.shift ? "merge" : "text" ):
+				 ( Keyboard.shift ? "cut" : "text" ):
 			 (e.x < this.x && e.y > this.y) ?
-				( Keyboard.shift ? "merge" : "define" ):
+				( Keyboard.shift ? "cut" : "define" ):
 			(e.y < this.y) ?
-				( Keyboard.shift ? "merge" : "cut" ):
+				( Keyboard.shift ? "cut" : "merge" ):
 			"none";
 		if (this.visible)
 			(this.mode == "define") ?
@@ -132,7 +132,24 @@ let('Editor',Widget, {
 	release: function(e) {},
 	none: function() {}, // Do nothing
 	cut: function() { // Push to edit stack
-		this.selected.each(function(v,k) { v.at(0,0).by(0,0).release() });
+		var b = Box.init().at(Editor.w < 0 ? Editor.x + Editor.w : Editor.x, Editor.y+Editor.h).by(Editor.w<0? -Editor.w : Editor.w, -Editor.h);
+		Screen.as(b).red().frame();
+		var y = this.selected[0];
+		for(var x = y; x; x = y.sibling) {
+			if (!b.hit(x))  {
+				y = x;
+				continue;
+			}
+			if (x.title && x.sibling) {
+				NSDefinitions[x.title.clean().content()] = x.sibling;
+				x.sibling.setTitle(x.title.content());
+				x.sibling.onMouse('move','down');
+				
+			} 
+			y.sibling = x.sibling;
+			x.sibling = false;
+			x.at(0,0).by(0,0).release();
+		}
 		this.selected = [];
 	},
 	merge: function() {
