@@ -10,32 +10,32 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
-# Used 4 times in query history.
+# Unused in query history -- copied from input.
 - kind: NSChannelMsg
   properties:
   - name: id
   - name: when
 
-# Used 135 times in query history.
+# Used once in query history.
 - kind: NSChannelMsg
   properties:
   - name: id
   - name: when
     direction: desc
 
-# Used 119 times in query history.
+# Used 2 times in query history.
 - kind: NSDefinition
   properties:
   - name: cid
   - name: when
 
-# Used 100 times in query history.
+# Unused in query history -- copied from input.
 - kind: NSDefinition
   properties:
   - name: id=
   - name: title
 
-# Used 82 times in query history.
+# Unused in query history -- copied from input.
 - kind: NSDefinition
   properties:
   - name: oid

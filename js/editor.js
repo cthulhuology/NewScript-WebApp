@@ -13,7 +13,7 @@ let('Editor',Widget, {
 	count: 0,
 	users: [],
 	selected: [],
-	pasteboard: [],
+	source: false, 
 	definitions: [],
 	mousex: 0, mousey: 0, mouseb: false,
 	user: { username : "", loggedin: false },
@@ -27,7 +27,9 @@ let('Editor',Widget, {
 				Screen.at(this.x,this.y+i*80).by(this.w,80).gray().frame();
 		if (this.mode == "text")
 			Screen.as(this).gray().frame();
-		if (this.mode != "text" && this.mode != "define" && this.mode != "none")
+		if (this.mode == "merge")
+			Screen.as(this).blue().line();
+		if (this.mode == "cut")
 			Screen.as(this).red().line();
 	},
 	init: function() {
@@ -58,17 +60,21 @@ let('Editor',Widget, {
 		this.mousex = e.x; this.mousey = e.y;
 		if (this.mouseb)
 			this.mode = (e.x > this.x && e.y > this.y ) ? 
-				 ( Keyboard.shift ? "paste" : "text" ):
+				 ( Keyboard.shift ? "merge" : "text" ):
 			 (e.x < this.x && e.y > this.y) ?
-				( Keyboard.shift ? "add" : "define" ):
+				( Keyboard.shift ? "merge" : "define" ):
 			(e.y < this.y) ?
-				( Keyboard.shift ? "copy" : "cut" ):
+				( Keyboard.shift ? "merge" : "cut" ):
 			"none";
 		if (this.visible)
 			(this.mode == "define") ?
 				this.at(e.x+20,this.y).by(400,80 * (1 + Math.floor((e.y - this.y)/80))):
 				this.by(e.x - this.x,e.y - this.y);
 		this.select();
+		if (this.mode == "merge" && !this.source)  {
+			this.source = this.selected[0];
+			this.selected = [];
+		}
 	},
 	up: function(e) {
 		this.mouseb = false;
@@ -83,7 +89,7 @@ let('Editor',Widget, {
 		this.selected = [];
 		this.definitions.any(function(t,z) {
 			for (var d = t; d; d = d.sibling) 
-				if (typeof(d.hit) == "function" && d.hit(b)){
+				if (typeof(d.hit) == "function" && d.hit(b)) {
 					t.walk(function(x) { Editor.selected.push(x) });
 					return true;
 				}
@@ -126,19 +132,23 @@ let('Editor',Widget, {
 	release: function(e) {},
 	none: function() {}, // Do nothing
 	cut: function() { // Push to edit stack
-		this.pasteboard = this.selected[0];
-		this.selected.each(function(v,k) { v.release() });
+		this.selected.each(function(v,k) { v.at(0,0).by(0,0).release() });
 		this.selected = [];
 	},
-	copy: function() { // Copy to edit stack
-
-	},
-	paste: function () { // Pop off edit stack
-		this.pasteboard.each(function(v,k) { 
-			v.restore();
-			v.at(Screen.mousex,Screen.mousey);
-		});
-		this.pasteboard = [];
+	merge: function() {
+		if (this.selected.length > 0) {
+			var d = this.selected[0];
+			if (this.source == this.selected[0]) return;
+			var o = null;
+			d.walk(function(x) { o = x });
+			o.sibling = this.source;
+			this.source.title.release();
+			this.source.title = false;
+			this.source.offMouse('down','move');
+			d.resize();
+		}
+		this.source = false;
+		this.selected = [];
 	},
 	define: function() { // Create a new Definition
 		for (var i = 0; i < this.h / 80; ++i) {

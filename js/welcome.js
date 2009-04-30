@@ -16,6 +16,7 @@ let('Welcome',Widget,{
 	icon: false,
 	button: false,
 	init: function() {
+		this.hide();
 		get('welcome/',function(txt) {
 			if (!txt) return;
 			var  o = txt.unjson();
@@ -26,6 +27,7 @@ let('Welcome',Widget,{
 				return;
 			}
 			o.icons.every(function(v,i) { Welcome.icons.push(Icon.init(v)) });
+			Welcome.show();
 		});
 		this.at(Display.w/2 - 232,Display.h/2 - 32).by(464,64);
 		this.button = Button.init("/images/join.png");

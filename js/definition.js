@@ -39,7 +39,7 @@ let('Definition',Widget,{
 	down: function(e) {
 		var b = Box.init().as(this).to(this.w-100,0).by(100,30);
 		this.walk(function(d) { b.to(0,d.h) });
-		if (b.hit(e))
+		if (b.hit(e) && this.title)
 			NS.define(this);
 	},
 	draw: function() {

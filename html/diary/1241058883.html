@@ -1,0 +1,21 @@
+<h4>Wed 29 2009 - Google Apps Port</h4>
+<h5>- Dave Goehrig</h5>
+<p>I've ported NewScript to Google Apps!  The initial reason for doing so was because my server crashed, and is going to take a few days to fix the machine.  The subsequent reason was to make sure that it can scale to meet the needs of actual users.  The port itself was pretty trivial, as the old backend worked as a set of CGI scripts that stored everything directly in files.  The new backend is a Django app, that stores everything in a few objects, basically storing the raw data in text fields.</p>
+<p>What has changed in the beta:</p>
+<ul>
+<li>Yet another login system, now uses Google Apps infrastructure for user accounts</li>
+<li>Object merge now works</li>
+<li>Cleaned up compilation</li>
+<li>Simplified object model</li>
+<li>Inventory tracking improvements</li>
+<li>Auto-save on definition changes</li>
+<li>New define button on objects</li>
+</ul>
+<p>The best aspect of the changes have little to do with switching to Google Apps, but rather are features that were added to the pre-port application.  The key features are all changes to objects are auto-saved as soon as you switch focus.  Because the code now diffs the stored representation, you're pretty much certain not to record redundant edits, although you might get more incremental saves than you'd like if you switch context while editing.</p>
+<p>The coolest feature is definitely object merge.  Take two objects.  Hold down <b>Shift</b> and draw a line between the two of them:</p>
+<img src="/images/Merge.png">
+<p>And you get the resulting merged object:</p>
+<img src="/images/Merged.png">
+<p>
+Using this sort of method you can extend objects quickly and easily without adding significant complexity to the interface.  You don't need to cut and paste, or use secondary menus.  Just hold down shift, click, and drag together.  Since in NewScript you build function by placing words together like blocks, so too should you build objects by linking them together and stacking them up.
+</p>

@@ -23,7 +23,6 @@ let('Widget',Box, {
 		return this.remove();
 	},
 	instance: function() {
-		this.show();
 		Screen.widgets.push(this);
 		return this;
 	},	

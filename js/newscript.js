@@ -55,8 +55,8 @@ let('Newscript',Widget,{
 		'\\'   : function() { NS.tos ^= NS.nos; NS.nos = NS.ds.pop() },
 		'!#'   : function() { NS.cnt = NS.tos; NS.tos = NS.nos; NS.nos = NS.ds.pop() },
 		'@#'   : function() { NS.ds.push(NS.nos); NS.nos = NS.tos; NS.tos = NS.cnt },
-		'<<'   : function() { NS.tos << NS.cnt },
-		'>>'   : function() { NS.tos >> NS.cnt },
+		'<<'   : function() { NS.tos = NS.tos << NS.cnt },
+		'>>'   : function() { NS.tos = NS.tos >> NS.cnt },
 		'@'    : function() { NS.tos = NS.mem[NS.tos] },
 		'$'    : function() { NS.ds.push(NS.nos); NS.nos = NS.tos; NS.tos = NS.mem[NS.src++]},
 		'!$'   : function() { NS.src = NS.tos },
@@ -144,6 +144,7 @@ let('Newscript',Widget,{
 	},
 	store: function(def) {
 		if (!def.title) return;
+		if (def.title.clean().content() == "An Object") return;
 		var name = def.title.clean().content();
 		var js = NS.json(def);
 		if (NSStored[name] && !NS.diff(js,NSStored[name])) return;
