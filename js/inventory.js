@@ -7,7 +7,7 @@
 var Definitions = {};
 var Sources = {};
 
-let('Source', Button, {
+var Source = let(Button, {
 	icon: function(v) {
 		var s = this.init('/images/ns.png',v.title);
 		s.id = v.id;
@@ -19,13 +19,13 @@ let('Source', Button, {
 	},
 });
 
-let('Inventory',{
+var Inventory = let({
 	icons: [],
 	load: function() {
 		Sources = {};
 		Inventory.icons.every(function(v,i) { v.release(); });
 		Inventory.icons = [];
-		get('objects/' + Channel.channel, function(txt) {
+		get('/ns/objects/' + Channel.channel, function(txt) {
 			if (!txt) return;
 			var o = txt.unjson();	
 			var b = Box.init().at(16050,16050).by(48,48);
@@ -38,7 +38,7 @@ let('Inventory',{
 				var s = Source.icon(v).as(b);
 				Inventory.icons.push(s);
 				Sources[v.title] = s;
-				b.to((j+1) % wc ? 200 : -1000, (j+1) % wc ? 0 : 100);
+				b.to((j+1) % wc ? 200 : -800, (j+1) % wc ? 0 : 100);
 				++j;
 			});
 		});

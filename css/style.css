@@ -22,6 +22,8 @@ h5 {
 	font: bold 12px Trebuchet MS,Arial, sans-serif,Tahoma;
 }
 
+dt { padding-bottom: 0.5em; }
+
 dd {
 	padding-bottom: 1em;
 }

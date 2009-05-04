@@ -6,7 +6,7 @@
 // requires: fundamentals.js
 //
 
-let('Box',{
+var Box = let({
 	x: 0, y: 0, w: 0, h: 0,
 	init: function() { return this.clone() },
 	hit: function(o) {

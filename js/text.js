@@ -4,14 +4,15 @@
 // All Rights Reserved
 //
 
-let('Text',Widget,{
+var Text = let(Widget,{
 	_default: "some text",
 	data: null,
-	fonttype: "/images/16ptBlack.png",
 	colorizer: false,
+	stroke: false,
 	active: false,
 	frame: false,
 	fill: false,
+	style: 'normal',
 	init: function() {
 		var t = this.clone();
 		t.onMouse('move');
@@ -21,17 +22,17 @@ let('Text',Widget,{
 	draw:  function() {
 		if (!this.visible) return;
 		if (this.fill) Screen.as(this).color(this.fill.r,this.fill.g,this.fill.b).fill();
-		Screen.as(this).font(this.fonttype).colorize(this.colorizer).print(this.data).colorize(false);
+		if (this.stroke) Screen.color(this.stroke.r,this.stroke.g,this.stroke.b);
+		Screen.as(this).to(4,0).style(this.style).font("16px Arial").colorize(this.colorizer).print(this.data).colorize(false);
 		this.by(Math.max(this.w,this.longest()),Math.max(this.h,Screen.y - Display.y-this.y+20));
 		if (this.frame) Screen.as(this).gray().frame();
-
 	},
 	longest: function() {
 		var retval = 0;
 		this.data.every(function(v,i) { retval = Math.max(retval,v.length*16) });
 		return retval;
 	},
-	size: function(b) { return Screen.size(this.content(),Box.init().as(b)) },
+	size: function(b) { return this.content().length*8 },
 	move: function(e) { 
 		this.clean();
 		this.offKey('press');
@@ -105,6 +106,7 @@ let('Text',Widget,{
 	},
 	content: function() { return this.data.join(" ") },
 	font: function(f) { this.fonttype = f; return this },
+	color: function(r,g,b) { this.stroke = { 'r' : r, 'g': g, 'b': b }; return this; },
 	colorize: function(f) { this.colorizer = f; return this },
 	background: function(r,g,b) { this.fill = {'r':r,'g':g,'b':b}; return this },
 	define: function() { }, // Do nothing, we don't define text blocks
@@ -112,5 +114,9 @@ let('Text',Widget,{
 		var msg = { msg: this.clean().content(), from: Editor.user.name, date: today() };
 		msg.send(Channel.channel);
 		this.data = [""];
+	},
+	italic: function() {
+		this.style = 'italic';
+		return this;
 	},
 });

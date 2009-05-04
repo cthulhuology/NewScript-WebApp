@@ -4,16 +4,21 @@
 // All Rights Reserved
 //
 
-let('Display',Box, {
+var Display = let(Box, {
 	canvas: null,
 	init: function() {
-		Keyboard.init(document);
-		Mouse.init($('screen'));
-		this.canvas = $('screen');
+		Keyboard.init();
+		Mouse.init();
 		this.by(window.innerWidth, window.innerHeight);	
-		this.canvas.setAttribute('width',this.w);
-		this.canvas.setAttribute('height',this.h);
 		this.at(0,0);
 		return this;
 	},
+	to: function(x,y) {
+		_root.currentTranslate.x += x;
+		_root.currentTranslate.y += y;
+	},
+	at: function(x,y) {
+		_root.currentTranslate.x = x;
+		_root.currentTranslate.y = y;
+	}
 });

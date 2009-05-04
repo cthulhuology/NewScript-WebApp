@@ -6,7 +6,8 @@
 // requires: screen.js, box.js
 //
 
-let('Widget',Box, {
+var Widget = let(Box, {
+	drawn: false,
 	visible: true,
 	events: { keyboard: [], mouse: [] },
 	draw: function() {},
@@ -24,6 +25,7 @@ let('Widget',Box, {
 	},
 	instance: function() {
 		Screen.widgets.push(this);
+		this.draw();
 		return this;
 	},	
 	restore: function() { // Override this method, not instance for adding custom code

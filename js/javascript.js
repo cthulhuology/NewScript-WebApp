@@ -30,6 +30,7 @@ Object.prototype.render = function(n,b) {
 	if (this._language == "Newscript") return;
 	var d = Definition.init(b);
 	var od = d;
+	d._language = "Javascript";
 	JSDefinitions[n] = d.populate(n,'prototype',
 		this.prototype ? this.prototype.toString() : Object.toString());
 	d.resize(b);
@@ -45,7 +46,7 @@ Object.prototype.render = function(n,b) {
 	return od;
 }
 
-let('Javascript',{
+var Javascript = let({
 	name: "Javascript",
 	opcodes: {},
 	lexicon: window,

@@ -1,170 +1,186 @@
-// newscript.js
+// svg.js
 //
 // Copyright (C) 2009 David J. Goehrig
 // All Rights Reserved
 //
-// NB: this doesn't work with IE but IE doesn't 
-// support canvas so it doesn't matter!
-//
-// requires: fundamentals.js, image.js, box.js
 
-let('Screen', Box, {
-	images: {},
-	widgets: [],
-	ctx: null,
+var Screen = let({
+	x: 0,
+	y: 0,
+	w: 0,
+	h: 0,
+	rad: 10,
 	delay: 40,
 	timer: null,
 	timers: [],
-	rad: 5,
-	fontImage: Image.init('/images/16ptBlack.png').by(20,20),
+	widgets: [],
+	size: '16px',
+	family: 'Arial',
 	colorizer: false,
-	hack: navigator.userAgent.indexOf('Firefox') > 0,
-	init: function(e) {
-		this.ctx = Display.canvas.getContext('2d'); 
+	fg: "none",
+	bg: "none",
+	fontstyle: "normal",
+	lw: 1,
+	init: function() {
 		this.timer = setTimeout("Screen.animate()",this.delay);
+	},
+	add: function(e) {
+		_root.appendChild(e);
 		return this;
 	},
-	// Override the at method to do display based placement
+	as: function(w) {
+		this.x = w.x;
+		this.y = w.y;
+		this.w = w.w;
+		this.h = w.h;
+		return this;
+	},
+	to: function(x,y) {
+		this.x += x;
+		this.y += y;
+		return this;
+	},
 	at: function(x,y) {
-		this.x = x + Display.x;
-		this.y = y + Display.y;
+		this.x = x;
+		this.y = y;
 		return this;
 	},
-	arc: function(r) {
-		this.ctx.beginPath();
-		this.ctx.arcTo(this.x,this.y,this.w+this.x,this.h+this.y,r);
-		this.ctx.closePath();
-		this.ctx.stroke();
+	by: function(w,h) {
+		this.w = w;
+		this.h = h;
 		return this;
 	},
 	radius: function(r) {
 		this.rad = r;
-	},
-	line: function() {
-		this.ctx.beginPath();
-		this.ctx.moveTo(this.x,this.y);
-		this.ctx.lineTo(this.x+this.w,this.y+this.h);
-		this.ctx.stroke();
-	},
-	frame: function() {
-		this.ctx.beginPath();
-		this.ctx.moveTo(this.x+this.rad, this.y);
-		this.ctx.lineTo(this.x+this.w-this.rad, this.y);
-		this.ctx.arcTo(this.x+this.w, this.y, this.x+this.w, this.y+this.rad, this.hack ? 0.1 : this.rad);
-		this.ctx.lineTo(this.x+this.w, this.y+this.h-this.rad);
-		this.ctx.arcTo(this.x+this.w, this.y+this.h, this.x+this.w-this.rad, this.y+this.h, this.rad);
-		this.ctx.lineTo(this.x+this.rad, this.y+this.h);
-		this.ctx.arcTo(this.x, this.y+this.h, this.x, this.y+this.h-this.rad, this.hack ? 0.1 :this.rad);
-		this.ctx.lineTo(this.x, this.y+this.rad);
-		this.ctx.arcTo(this.x, this.y, this.x+this.rad, this.y, this.rad);
-		this.ctx.stroke();
 		return this;
 	},
-	stroke: function () {
-		this.ctx.stroke();
-	},
 	lineWidth: function(w) {
-		this.ctx.lineWidth = w;
+		this.lw = w;
 		return this;
 	},
 	font: function(f) {
-		this.fontImage = Image.init(f);
-		this.fontImage.by(20,20);	
+		var x = f.split(" ");
+		if (x[0]) this.size = x[0];
+		if (x[1]) this.family = x[1];
 		return this;
 	},
-	colorize: function(f) {
-		this.colorizer = f;
+	colorize: function(x) {
+		this.colorizer = x;
 		return this;
 	},
-	print: function(txt) {
-		var o = 0;
-		var xo = Screen.x;
-		var a = typeof(txt) == "string" ? txt.split(/\s/) : txt;
-		for (var j = 0; j < a.length; ++j) {
-			if (a[j].length*16 + Screen.x > xo + Screen.w)
-				this.to(xo - Screen.x,20);	
-			if (typeof(this.colorizer) == "function")
-				this.colorizer(a[j]);
-			for (var i = 0; i < a[j].length; ++i) {
-				if (typeof(a[j].charAt) != "function") continue;
-				var c = Keyboard.font(a[j].charAt(i));
-				this.draw(Screen.fontImage.at(20*(c%16),20*Math.floor(c/16))).to(16,0);
-			}
-			if (Screen.w - Screen.x + xo > 16) this.to(16,0);
-		}
+	stroke: function() {
 		return this;
 	},
-	size: function(txt,bx) { // Gives the size of the rect to contain the current string.
-		var a = typeof(txt) == "string" ? txt.split(/\s/) : txt;
-		var xo = bx.x; var yo = bx.y;
-		for (var j = 0; j < a.length; ++j) {
-			if (a[j].length*16 + bx.x > bx.w)
-				bx.to(xo - bx.x, 20);
-			bx.to(16 * a[j].length + 16,0);
-		}
-		var b =  Box.init().at(xo,yo).by(bx.x - xo, bx.y - yo);
-		return b;
+	line: function() {
+		var d = $_("path");
+		d.setAttribute("d","M " + this.x + " " + this.y + " l " + this.w + " " + this.h);
+		d.setAttribute("stroke",this.fg);
+		d.setAttribute("stroke-width",this.lw);
+		return this.add(d);
 	},
-	color: function(r,g,b) {
-		this.ctx.strokeStyle = "rgb(" + r + "," + g + "," + b + ")";
-		this.ctx.fillStyle =   "rgb(" + r + "," + g + "," + b + ")";
+	frame: function() {
+		if (!_doc) return this;
+		var d = $_("path");
+		d.setAttribute("d", "M " + this.x +  " " + (this.y + this.rad) + " c 0 " + -this.rad + ", " + this.rad + " " + -this.rad + ", " + this.rad + " " +  -this.rad + " l " + (this.w - 2*this.rad) + " 0 c " + this.rad + " 0, " + this.rad + " " + this.rad + ", " + this.rad + " " + this.rad + " l 0 " + (this.h - 2*this.rad) + " c 0 " + this.rad + ", " + -this.rad + " " + this.rad + ", " + -this.rad + " " + this.rad + " l " + -(this.w - this.rad*2) + " 0 c " + -this.rad + " 0, " + -this.rad + " " + -this.rad + ", " + -this.rad + " " + -this.rad + " l 0 " + -(this.h-this.rad*2) );
+		d.setAttribute("stroke",this.fg);
+		d.setAttribute("fill",this.bg);
+		d.setAttribute("stroke-width",this.lw);
+		return this.add(d);
+	},
+	style: function(s) {
+		this.fontstyle = s;
 		return this;
 	},
-	red: function() { return this.color(255,0,0) },
-	yellow: function() { return this.color(255,255,0) },
-	green: function() { return this.color(0,255,0) },
-	blue: function() { return this.color(0,0,255) },
-	purple: function() { return this.color(255,0,255) },
-	black: function() { return this.color(0,0,0) },
-	gray: function() { return this.color(128,128,128) },
-	white: function() { return this.color(255,255,255) },
+	print: function (tx) {
+		if (!_doc) return this;
+		var a = (typeof(tx) == "string" ? tx.split(" ") : tx);
+		var d = $_('text');
+		d.setAttribute('x',this.x);
+		d.setAttribute('y',this.y + 16);
+		d.setAttribute('width',this.w);
+		d.setAttribute('height',this.h);
+		d.setAttribute('xml:space', 'preserve');
+		a.every(function(x,i) {
+			var s = $_('tspan');
+			var t = _doc.createTextNode(x + " " );
+			if (typeof(Screen.colorizer) == "function") 
+				Screen.colorizer(x);
+			s.setAttribute('font-size',Screen.size);
+			s.setAttribute('font-family',Screen.family);
+			s.setAttribute('font-style',Screen.fontstyle);
+			s.setAttribute('fill',Screen.fg);
+			s.appendChild(t);
+			d.appendChild(s);
+		});
+		return this.add(d);
+	},
+	draw: function (img) {
+		var i = $_('image');
+		i.setAttribute('x',this.x);
+		i.setAttribute('y',this.y);
+		i.setAttribute('width',this.w);
+		i.setAttribute('height',this.h);
+		i.setAttributeNS("http://www.w3.org/1999/xlink",'href',img.path);
+		return this.add(i);
+	},
+	red: function() { this.fg = "red"; return this },
+	yellow: function() { this.fg = "yellow"; return this },
+	green: function() { this.fg = "green"; return this },
+	blue: function() { this.fg = "blue"; return this },
+	orange: function() { this.fg = "orange"; return this },
+	purple: function() { this.fg = "purple" ; return this},
+	black: function() { this.fg = "black"; return this },
+	gray: function() { this.fg = "gray"; return this },
+	white: function() { this.fg = "white"; return this },
 	fill: function() {
-		this.ctx.fillRect(this.x,this.y,this.w,this.h);
-		return this;
+		var r = $_('rect');
+		r.setAttribute('x',this.x);
+		r.setAttribute('y',this.y);
+		r.setAttribute('width',this.w);
+		r.setAttribute('height',this.h);
+		r.setAttribute('fill',this.fg);
+		return this.add(r);
 	},
 	rect: function() {
-		this.ctx.strokeRect(this.x,this.y,this.w,this.h);
-		return this;
-	},
-	alpha: function(a) {
-		this.ctx.globalAlpha = a / 256;	
-		return this;
+		var r = $_('rect');
+		r.setAttribute('x',this.x);
+		r.setAttribute('y',this.y);
+		r.setAttribute('width',this.w);
+		r.setAttribute('height',this.h);
+		r.setAttribute('stroke',this.fg);
+		return this.add(r);
 	},
 	clear: function() {
-		this.ctx.clearRect(0,0,Display.w,Display.h);
+		for (var e = _root.firstChild; e;)  {
+			var o = e;
+			e = e.nextSibling;
+			_root.removeChild(o);
+		}
+		return this;
+	},
+	color: function(r,g,b) {
+		this.fg  = "rgb(" + r + "," + g + "," + b + ")";
 		return this;
 	},
 	animate: function() {
 		this.clear();
-		var b = Box.init().at(-Display.x,-Display.y).by(Display.w,Display.h);
+		Box.at(-_root.currentTranslate.x, -_root.currentTranslate.y).by(Display.w,Display.h);
 		this.widgets.every(function(w,i) {
-			if (typeof(w.draw) == "function" && (w.sticky || b.hit(w)))
-				w.draw();
+			w.draw();
 		});
-		this.timers.every(function(t,i) {
-			if (typeof(t.timer) == "function" )
-				t.timer();
-		});
+		for (var i = 0; i <this.timers.length; ++i) if (typeof(this.timers[i].timer) == "function") this.timers[i].timer();
 		this.timer = setTimeout("Screen.animate()",this.delay);
-		return this;
-	},
-	draw: function(i) {
-		try {
-			this.ctx.drawImage(i.data,i.x,i.y,i.w,i.h,this.x,this.y,i.w,i.h);
-		} catch(e) {}
-		return this;
 	},
 	overlaps: function(w) {
-		var retval = false;
-		Screen.widgets.every(function(v,i) {
-			if (v != Editor && w != v && w.hit(v)) 
-				return retval = true;
+		return this.widgets.any(function(x) {
+			if (typeof(x.hit) == "function" && x.hit(w)) return true;
+			return false;
 		});
-		return retval;
 	},
 	schedule: function(t) {
 		if (typeof(t.timer) == "function")
 			this.timers.push(t);
-	},
+		return this;
+	}
 });
 

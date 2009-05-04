@@ -6,18 +6,41 @@
 // required by all 
 //
 
+var _doc;
+var _root;
+var _svgns = 'http://www.w3.org/2000/svg';
+var _xlinkns = 'http://www.w3.org/1999/xlink';
+
+function start(evt) {
+	_doc = evt.target.ownerDocument;
+	_root = _doc.documentElement;
+	Editor.init();
+}
+
 function $(x) {
-	return x == document ? document :  document.getElementById(x);
+	return _doc.getElementById(x);
 }
 
 function $_(x) {
-	return document.createElement(x);
+	return _doc.createElementNS(_svgns,x);
+}
+
+Array.prototype.every = function (f) {
+	for (var i  = 0; i < this.length; ++i) 
+		f(this[i],i);
 }
 
 Object.prototype.each = function(f) {
 	for (var k in this)
 		if (this.hasOwnProperty(k) && k.charAt(0) != "_" && k != 'prototype') 
 			f(this[k],k);
+}
+
+Object.prototype.let = function(n) {
+	var o = {};
+	for (var i = 0; i < arguments.length; ++i)
+		arguments[i].each(function(v,k) { o[k] = v });
+	return o;
 }
 
 Object.prototype.walk = function(f) {
@@ -42,15 +65,6 @@ Object.prototype.any = function(t) {
 }
 
 // Let copy/clones objects with prototypes, overrides localstorage, etc.
-Object.prototype.let = function(n) {
-	var o = {};
-	if (window[n]) window['_' + n] = window[n];
-	window[n] = o;
-	for (var i = 1; i < arguments.length; ++i) 	// do a deep copy of each arg
-		arguments[i].each(function(v,k) { o[k] = v });
-	return o;
-}
-
 Object.prototype.can = function(k) {
 	if (typeof(this[k]) == "function") return true;
 	return false;
@@ -88,11 +102,6 @@ Array.prototype.expunge = function (e) {
 	for (var i = 0; i < this.length; ++i)
 		if ( this[i] == e) 
 			this.splice(i,1);	
-}
-
-Array.prototype.every = function (f) {
-	for (var i  = 0; i < this.length; ++i) 
-		f(this[i],i);
 }
 
 Array.prototype.map = function (f) {
@@ -173,7 +182,7 @@ Element.prototype.listen = function(e,f) {
 document.onkeypress = function() { return false }; // Hack to break backspace
 
 Object.prototype.request = function(cb) {
-	this._request = XMLHttpRequest ? new XMLHttpRequest(): window.createRequest();
+	this._request = XMLHttpRequest ? new XMLHttpRequest(): _doc.createRequest();
 	this._request.onreadystatechange = function () {
 		if (this.readyState != 4 || typeof(cb) != "function") return;
 		if (this.status == 404) cb(null);
@@ -187,8 +196,8 @@ Object.prototype.post = function(url,cb) {
 	this.request(cb);
 	this._request.open("POST",url,true);
 	this._request.setRequestHeader('Content-Type','appliaction/x-www-from-urlencoded');
-	this._request.setRequestHeader('Content-Length',data.length);
-	this._request.setRequestHeader('Connection','close');
+//	this._request.setRequestHeader('Content-Length',data.length);
+//	this._request.setRequestHeader('Connection','close');
 	this._request.send(data);
 }
 

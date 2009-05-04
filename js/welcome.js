@@ -4,20 +4,20 @@
 // All Rights Reserved
 //
 
-let('Icon',Button, {
+var Icon = let(Button, {
 	down: function(e) {
 		if (this.hit(e)) 
 			Welcome.icon = this.img;
 	}
 });
 
-let('Welcome',Widget,{
+var Welcome = let(Widget,{
 	icons: [],
 	icon: false,
 	button: false,
 	init: function() {
 		this.hide();
-		get('welcome/',function(txt) {
+		get('/ns/welcome/',function(txt) {
 			if (!txt) return;
 			var  o = txt.unjson();
 			Welcome.icons = [];

@@ -4,7 +4,7 @@
 // All Rights Reserved
 //
 
-let('Compiler',{
+var Compiler = let({
 	state: [],
 	memory: [],
 	addr: 0,

@@ -7,7 +7,8 @@
 //
 
 // The Device object is the prototype of all Device stacks, handles dispatching messages to widgets
-let('Device',{
+
+var Device = let({
 	handlers: {},
 	manage: function() {
 		for (var i = 0; i < arguments.length; ++i)

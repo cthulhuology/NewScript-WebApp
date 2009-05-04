@@ -4,7 +4,7 @@
 
 var Users = {}
 
-let('User', Button, {
+var User = let(Button, {
 	offset: 0,
 	index: 0,
 	icon: null,
@@ -20,7 +20,7 @@ let('User', Button, {
 		u.label = false;
 		u.img = Image.init('/icons/icon.png');
 		u.onMouse('move','down');
-		if (! Users[n]) get('user/' + n, function(txt) {
+		if (! Users[n]) get('/ns/user/' + n, function(txt) {
 			if (!txt) return;
 			var o = txt.unjson();
 			u.img = Users[n] = Image.init(o.icon);
@@ -30,10 +30,10 @@ let('User', Button, {
 		return u.instance();
 	},
 	draw: function() {
-		this.at(Display.w-Display.x-48,25-Display.y+ this.index*80).by(48,48);
+		this.at(Display.w-48,25+ this.index*80).by(48,48);
 		Screen.as(this).draw(this.img);
 		if (this.label) 
-			Screen.as(this).to(this.w/2-(this.label.length*16),this.h/2).font("/images/16ptGrayItalic.png").print(this.label);
+			Screen.as(this).to(this.w/2-(this.label.length*16),this.h/2).gray().style('italic').font("16px Arial").print(this.label);
 	},
 	move: function(e) {
 		this.label = this.hit(e) ? this.name : false ;

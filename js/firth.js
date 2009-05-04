@@ -6,7 +6,7 @@
 // This is the Newscript x86 Compiler implemented in Javascript
 //
 
-let('FirthVM',{
+FirthVM = let({
 	'ret'  : function() { Compiler.byte(0xc3) },
 	'.'    : function() { this.ret() },
 	'up'   : function() { Compiler.bytes([ 0x81, 0xc5, 0xff, 0xff, 0xff, 0xff ]) },
@@ -54,7 +54,7 @@ let('FirthVM',{
 	'=>' : function() { Compiler.bytes([ 0xfc, 0xf3, 0xa5, ]) },
 });
 
-let('Firth',{
+Firth = let({
 	words: [],
 	strings: {},
 	variables: [],

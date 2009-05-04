@@ -6,13 +6,10 @@
 // requires: fundamentals.js, box.js
 //
 
-let('Image',Box,{
+var Image = let(Box,{
 	init: function(i) {
 		var img = Image.clone();
-		img.data = $_('img');
-		img.data.onload = function() { img.at(0,0).by(img.data.width,img.data.height) };
 		img.path = i;
-		img.data.src = i;
 		return img;
 	},
 	at: function(x,y) {

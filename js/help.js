@@ -4,12 +4,20 @@
 // All Rights Reserved
 //
 
-let('Help',{
+var Help = let(Widget,{
+	txt: [],
 	init: function() {
-		var help = Text.init().at(-15950,16050).by(Display.w-100,Display.h-100);
-		help.move = function(e) {},	
-		help.get(document.location.href.path() + 'help/', function(txt) {
-			help.set(txt);
+		this.get('/ns/help/', function(txt) {
+			Help.txt = txt.split("\n");
 		});
+		return this.instance();
+	},
+	draw: function() {
+		Screen.at(-15950,16050).by(Display.w-100,Display.h-100).color(0,0,0);
+		Help.txt.every(function(x,i) {
+			Screen.print(x);
+			Screen.to(0,25);
+		});
+
 	},
 });

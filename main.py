@@ -48,6 +48,11 @@ class DiaryPost(db.Model):
 	user = db.UserProperty(required=True)
 	blurb = db.TextProperty(required=True)
 
+class TutorialPost(db.Model):
+	title = db.StringProperty(required=True)
+	when = db.DateTimeProperty(required=True,auto_now=True)
+	blurb = db.TextProperty(required=True)
+
 class NSBox(db.Model):
 	x = db.IntegerProperty()
 	y = db.IntegerProperty()
@@ -73,6 +78,29 @@ class IndexHandler(webapp.RequestHandler):
 	def get(self):
 		self.redirect('/html/index.html')
 
+class TutorialHandler(webapp.RequestHandler):
+	def get(self):
+		tutorials = TutorialPost.all().order('when').fetch(100)
+		self.response.out.write("<h4>NewScript Tutorials</h4><dl>")
+		for t in tutorials:
+			self.response.out.write(Template("""<dt>${title}</dt><dd>${blurb}</dd>""").substitute(title=t.title,blurb=t.blurb))
+		self.response.out.write("</dl>")
+
+class TutorialEditorHandler(webapp.RequestHandler):
+	def get(self):
+		u = users.get_current_user()
+		us = NSUser.all().filter('user =',u).fetch(1)
+		if not us or us[0].admin != 'true':
+			return self.redirect('/')
+		self.response.out.write("""<form method="post"><input type="text" name="title" size="120"><textarea name="blurb" rows="20" cols="80"></textarea><input type="submit" value="post"></form>""")
+	def post(self):
+		u = users.get_current_user()
+		us = NSUser.all().filter('user =',u).fetch(1)
+		if not us or  us[0].admin != 'true':
+			return self.redirect('/')
+		TutorialPost(title=self.request.get('title'),blurb=self.request.get('blurb')).put()
+		return self.redirect('/')
+
 class DiaryHandler(webapp.RequestHandler):
 	def get(self):
 		self.response.headers['Content-Type'] = 'text/html'
@@ -83,7 +111,7 @@ class DiaryHandler(webapp.RequestHandler):
 	def post(self):
 		u = users.get_current_user()
 		us = NSUser.all().filter('user =',u).fetch(1)
-		if not us[0].admin == 'true':
+		if not us or us[0].admin != 'true':
 			return self.redirect('/')
 		dp = DiaryPost(user=u,title=datetime.datetime.now().strftime('%a %b %d %Y - ') + self.request.get('title'),blurb=self.request.get('blurb'))
 		dp.put()
@@ -112,7 +140,7 @@ class SidebarHandler(webapp.RequestHandler):
 <li><a href="/ns/">NewScript Beta</a></li>
 <li><a href="javascript:goto('faq');">F.A.Q.</a></li>
 <li><a href="javascript:goto('todo');">To Do List</a></li>
-<li><a href="javascript:goto('tutorial')">Tutorials</a></li>
+<li><a href="javascript:tutorials()">Tutorials</a></li>
 <li><a href="javascript:goto('documentation')">Documentation</a></li>
 </ul>
 <h4>Development News</h4>
@@ -214,33 +242,17 @@ class AppHandler(webapp.RequestHandler):
 		user = users.get_current_user()
 		if not user:
 			return self.redirect(users.create_login_url(self.request.uri))
-		self.response.headers['Content-Type'] = 'text/html'
-		self.response.out.write("""
-<html>
-<head>
-<title>NewScript</title>""")
-		for i in sources:
-			self.response.out.write(Template("""<script language="javascript" src="/js/${file}.js"></script>""").substitute(file=i))
-		self.response.out.write(Template("""<style>
-#screen {
-	position: absolute;
-	background-color: white;
-	top: 0px;
-	left: 0px;
-}
-</style>
+		self.response.headers['Content-Type'] = 'image/svg+xml'
+		self.response.out.write(Template("""
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+version="1.2" baseProfile="tiny" onload="start(evt)" width="100%" height="100%">
 <script>
 var Username = '${username}';
 var UserID = '${userid}';
-</script>
-</head>
-<body onload="Editor.init()">
-<canvas id="screen"></canvas>""").substitute(userid=user.user_id(),username=user.nickname()))
-		for i in images:	
-			self.response.out.write(Template("""<img src="/images/${image}.png" width="0" height="0" />""").substitute(image=i))
-		for i in icons:
-			self.response.out.write(Template("""<img src="/icons/${image}.png" width="0" height="0" />""").substitute(image=i))
-		self.response.out.write("""</body></html>""")
+</script>""").substitute(userid=user.user_id(),username=user.nickname()))
+		for i in sources:
+			self.response.out.write("""<script type="text/ecmascript" xlink:href="/js/""" + i + """.js" />""")
+		self.response.out.write("""</svg>""")
 
 ###
 # Main Application
@@ -251,6 +263,8 @@ def main():
 					('/sidebar/',SidebarHandler),
 					('/diary/edit/',DiaryEditorHandler),
 					('/diary/.*',DiaryHandler),
+					('/tutorials/edit/.*',TutorialEditorHandler),
+					('/tutorials/.*',TutorialHandler),
 					('/ns/', AppHandler),
 					('/ns/help/', HelpHandler),
 					('/ns/welcome/',WelcomeHandler),
