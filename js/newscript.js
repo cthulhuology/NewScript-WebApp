@@ -15,65 +15,75 @@ function defed(x) {
 var NSDefinitions = {};
 var NSStored = {};
 
-var NS = Newscript = let(Widget,{
-	tos: 0,
-	nos: 0,
+var Macro = let({ });
+
+var Core = let({
+	','    : function() { NS.down() },					// #82
+	';'    : function() { NS.snos(NS.tos()); NS.down() },			// #83
+	'>r'   : function() { NS.upr(NS.tos()); NS.down() },			// #84
+	'~'    : function() { NS.stos(~NS.tos()) },				// #85
+	'&'    : function() { NS.snos(NS.tos() & NS.nos()); NS.down() },	// #86
+	'|'    : function() { NS.snos(NS.tos() | NS.nos()); NS.down() },	// #87
+	'\\'   : function() { NS.snos(NS.tos() ^ NS.nos()); NS.down() },	// #88
+	'@'    : function() { NS.stos(NS.mem[NS.tos]) },			// #89
+	'<'    : function() { NS.up(NS.nos() < NS.tos() ? -1 : 0) },		// #8a
+	'='    : function() { NS.up(NS.nos() == NS.tos() ? -1 : 0) },		// #8b
+	'<<'   : function() { NS.stos(Math.floor(NS.tos << 1)) },		// #8c
+	'<<<'  : function() { NS.stos(Math.floor(NS.tos() << 8)) },		// #8d
+	'0'    : function() { NS.up(0) },					// #8e
+	'1'    : function() { NS.up(1) },					// #8f
+	'.'    : function() { NS.ip = NS.rtos(); NS.downr() },			// #90
+	'?'    : function() { if (NS.nos()) NS.ip = NS.tos(); NS.down(); NS.down() }, // #91
+	':'    : function() { NS.up(NS.tos()) },				// #92
+	'^'    : function() { NS.up(NS.nos()) },				// #93
+	'r>'   : function() { NS.up(NS.rtos()); NS.downr() },			// #94
+	'-'    : function() { NS.stos(-NS.tos()) },				// #95
+	'+'    : function() { NS.snos(NS.tos() + NS.nos()); NS.down() },	// #96
+	'*'    : function() { NS.snos(Math.floor(NS.tos() * NS.nos())); NS.down() },	// #97
+	'/'    : function() { var b = NS.tos(); var a = NS.nos(); NS.stos(Math.floor(a / b)); NS.snos(a % b)}, // #98
+	'!'    : function() { NS.mem[NS.tos()] = NS.nos(); NS.down() },		// #99
+	'>'    : function() { NS.up(NS.nos() > NS.tos() ? -1 : 0) },		// #9a
+	'~='   : function() { NS.up(NS.nos() != NS.tos() ? -1 : 0); },		// #9b
+	'>>'   : function() { NS.stos(Math.floor(NS.tos() >> 1)) },		// #9c
+	'>>>'  : function() { NS.stos(Math.floor(NS.tos() >> 8)) },		// #9d
+	'@u'   : function() { NS.up(NS.utl) },					// #9e
+	'-1'   : function() { NS.up(-1) },					// #9f
+	'<-'   : function() { for(var i = 0; i < NS.cnt; ++i) NS.mem[NS.dst--] = NS.mem[NS.src--] },	// #a0
+	'@#'   : function() { NS.up(NS.cnt) },					// #a1
+	'@$'   : function() { NS.up(NS.src) },					// #a2
+	'@%'   : function() { NS.up(NS.dst) },					// #a3
+	'=='   : function() { for(var i = 0; i < NS.cnt; ++i) 			// #c0
+			if (NS.byte(NS.src++) != NS.byte(NS.dst++)) return NS.cnt; NS.cnt = 0 },
+	'#'    : function() { ++NS.cnt },					// #c1
+	'$'    : function() { NS.up(NS.mem[NS.src++]) },			// #c2
+	'%'    : function() { NS.mem[NS.dst++] = NS.tos() },			// #c3
+	'->'   : function() { for(var i = 0; i < NS.cnt; ++i) NS.mem[NS.dst++] = NS.mem[NS.src++] },	// #e0
+	'!#'   : function() { NS.cnt = NS.tos() },				// #e1
+	'!$'   : function() { NS.src = NS.tos() },				// #e2
+	'!%'   : function() { NS.dst = NS.tos() },				// #e3
+});
+
+var NS = Newscript = let({
+	dsi: 0,
+	rsi: 0,
 	utl: 0,
 	cnt: 0,
-	ds: [0,0,0,0,0,0],
-	rs: [0,0,0,0,0,0],
+	ds: [0,0,0,0,0,0,0,0],
+	rs: [0,0,0,0,0,0,0,0],
 	ip: 0,
 	mem: [],
 	free: 0,
 	src: 0,
 	dst: 0,	
-	opcodes: {
-		'ret'  : function() { NS.ip = NS.rs.pop() },
-		'.'    : function() { NS.ip = NS.rs.pop() },
-		'up'   : function() { NS.ds.pop() },
-		'down' : function() { NS.ds.push(0) },
-		'nip'  : function() { NS.nos = NS.ds.pop() },
-		'drop' : function() { NS.tos = NS.nos; NS.nos = NS.ds.pop() },
-		','    : function() { NS.tos = NS.nos; NS.nos = NS.ds.pop() },
-		'push' : function() { NS.rs.push(NS.tos); NS.tos = NS.nos; NS.nos = NS.ds.pop() },
-		';'    : function() { NS.rs.push(NS.tos); NS.tos = NS.nos; NS.nos = NS.ds.pop() },
-		'dup'  : function() { NS.ds.push(NS.nos); NS.nos = NS.tos },
-		'over' : function() { var a = NS.nos; NS.ds.push(a); NS.nos = NS.tos; NS.tos = a },
-		'pop'  : function() { NS.ds.push(NS.nos); NS.nos = NS.tos; NS.tos = NS.rs.pop() },
-		'^'    : function() { NS.ds.push(NS.nos); NS.nos = NS.tos; NS.tos = NS.rs.pop() },
-		'util' : function() { NS.utl = NS.ds.pop() },
-		'++'   : function() { ++NS.mem[NS.tos] }, // todo confirm no drop
-		'--'   : function() { --NS.mem[NS.tos] }, // todo confirm no drop
-		'-'    : function() { NS.tos = -NS.tos },
-		'+'    : function() { NS.tos += NS.nos; NS.nos = NS.ds.pop() },
-		'*'    : function() { NS.tos *= NS.nos; NS.nos = NS.ds.pop() },
-		'/'    : function() { var b = NS.tos; var a = NS.nos; NS.tos = Math.floor(a / b); NS.nos = a % b},
-		'*/'   : function() { NS.utl = NS.ds.pop(); var a = NS.nos; var b = NS.tos; NS.tos = Math.floor((a * NS.utl) / b); NS.nos = (a * NS.utl) % b },
-		'~'    : function() { NS.tos = ~NS.tos },
-		'&'    : function() { NS.tos &= NS.nos; NS.nos = NS.ds.pop() },
-		'|'    : function() { NS.tos |= NS.nos; NS.nos = NS.ds.pop() },
-		'\\'   : function() { NS.tos ^= NS.nos; NS.nos = NS.ds.pop() },
-		'!#'   : function() { NS.cnt = NS.tos; NS.tos = NS.nos; NS.nos = NS.ds.pop() },
-		'@#'   : function() { NS.ds.push(NS.nos); NS.nos = NS.tos; NS.tos = NS.cnt },
-		'<<'   : function() { NS.tos = Math.floor(NS.tos << NS.cnt) },
-		'>>'   : function() { NS.tos = Math.floor(NS.tos >> NS.cnt) },
-		'@'    : function() { NS.tos = NS.mem[NS.tos] },
-		'$'    : function() { NS.ds.push(NS.nos); NS.nos = NS.tos; NS.tos = NS.mem[NS.src++]},
-		'!$'   : function() { NS.src = NS.tos },
-		'@$'   : function() { NS.ds.push(NS.nos); NS.nos = NS.tos; NS.tos = NS.src },
-		'!'    : function() { NS.mem[NS.tos] = NS.nos; NS.tos = NS.nos; NS.nos = NS.ds.pop() },
-		'%'    : function() { NS.mem[NS.dst++] = NS.tos; NS.tos = NS.nos; NS.nos = NS.ds.pop() },
-		'!%' : function() { NS.dst = NS.tos; NS.tos = NS.nos; NS.nos = NS.ds.pop() },
-		'@%' : function() { NS.ds.push(NS.nos); NS.nos = NS.tos; NS.tos = NS.dst },
-		'<' : function() { NS.tos = (NS.nos < NS.tos ? 1 : 0); NS.nos = NS.ds.pop() },
-		'=' : function() { NS.tos = (NS.nos == NS.tos ? 1 : 0); NS.nos = NS.ds.pop() },
-		'>' : function() { NS.tos = (NS.nos > NS.tos ? 1 : 0); NS.nos = NS.ds.pop() },
-		'<=' : function() { for(var i = 0; i < NS.cnt; ++i) NS.mem[NS.dst--] = NS.mem[NS.src--] },
-		'<-' : function() { for(var i = 0; i < NS.cnt; ++i) NS.movebyte(NS.dst--, NS.src--) },
-		'==' : function() { NS.ds.push(NS.nos); NS.nos = NS.tos; NS.tos = 1; for(var i = 0; i < NS.cnt; ++i) if (NS.byte(NS.src++) != NS.byte(NS.dst++)) NS.tos = 0; },
-		'->' : function() { for(var i = 0; i < NS.cnt; ++i) NS.movebyte(NS.dst++, NS.src++) },
-		'=>' : function() { for(var i = 0; i < NS.cnt; ++i) NS.mem[NS.dst++] = NS.mem[NS.src++] },
-	},
+	tos: function() { return NS.ds[NS.dsi] },
+	stos: function(x) { NS.ds[NS.dsi] = x },
+	nos: function() { return NS.ds[(NS.dsi - 1) & 7] },
+	snos: function(x) { NS.ds[(NS.dsi - 1) & 7] = x },
+	up: function(x) { NS.dsi = (NS.dsi + 1) & 7; NS.ds[NS.dsi] = x },
+	down: function() { NS.dsi = (NS.dsi - 1) & 7 },
+	rtos: function() { return NS.rs[NS.rsi] },
+	upr: function(x) { NS.rsi = (NS.rsi + 1) & 7; NS.rs[NS.rsi] = x },
+	downr: function() { NS.rsi = (NS.rsi - 1) & 7 },
 	movebyte: function(d,s) {
 		var od = Math.floor(d/4);	var os = Math.floor(s/4);
 		var dc = d%4;			var sc = s%4;
@@ -89,28 +99,38 @@ var NS = Newscript = let(Widget,{
 	lexicon: {},
 	evaluator: function(txt) {
 		var words = txt.clean().data;
-		NS.ip = NS.free;
+		var x = NS.ip =  NS.free;
 		words.every(function(v,i) {
+			if (typeof(NS.lexicon['Macro'][v]) == "number") {
+				NS.upr(null);
+				NS.ip = NS.lexicon['Macro'][v];
+				return NS.execute();
+			}
 			if (v != "" && v != null)
-				NS.mem[NS.ip++] = v
+				NS.mem[x++] = v;
 		});
-		NS.mem[NS.ip] = null; // nullify the last field in memory
+		NS.mem[x] = null; // nullify the last field in memory
 		NS.ip = NS.free;
+		NS.execute();
+	},
+	execute: function() {
 		while (NS.ip >= 0) {
-			if (typeof(NS.opcodes[NS.mem[NS.ip]]) == "function") {
+			if (typeof(NS.lexicon['Core'][NS.mem[NS.ip]]) == "function") {
 				var i = NS.ip++;
-				NS.opcodes[NS.mem[i]]();
+				NS.lexicon['Core'][NS.mem[i]]();
 				continue;
 			}
 			if (typeof(NS.lexicon[NS.mem[NS.ip]]) == "object") {
-				NS.rs.push(NS.ip + 2);
+				NS.upr(NS.ip + 2);
 				NS.ip = NS.lexicon[NS.mem[NS.ip]][NS.mem[NS.ip+1]];
 				continue;
 			}
-			if (typeof(NS.mem[NS.ip]) == "string" && parseInt(NS.mem[NS.ip]) != NaN) {
-				NS.ds.push(NS.nos);
-				NS.nos = NS.tos;
-				NS.tos = parseInt(NS.mem[NS.ip]);
+			if (typeof(NS.mem[NS.ip]) == "string" 
+			&& (typeof(parseInt(NS.mem[NS.ip])) == "number")) {
+				if (NS.mem[NS.ip].charAt(0) == "#")
+					NS.up(parseInt('0x' + NS.mem[NS.ip].substr(1)));
+				else
+					NS.up(parseInt(NS.mem[NS.ip]));
 				++NS.ip;
 				continue;
 			}
@@ -120,9 +140,11 @@ var NS = Newscript = let(Widget,{
 		}
 		NS.ip = NS.free;
 	},
-	reset: function() {
+	init: function() {
 		Firth.reset();
-		NS.lexicon = {};
+		NS.lexicon = { Core: { _address: 'none'}, Macro: { _address: 'none' } };
+		Core.each(function(v,k) { NS.lexicon['Core'][k] = v });
+		Macro.each(function(v,k) { NS.lexicon['Macro'][k] = v });
 		NS.free = 0;
 		NS.mem = [];	
 		NS.ip = 0;
@@ -195,32 +217,10 @@ var NS = Newscript = let(Widget,{
 		def.walk(function(d) { obj[d.verb.clean().content()] = d.code.clean().data });
 		Firth.compile(name,obj);
 	},
-	x: 0,
-	y: 20,
-	w: 300,
-	h: 500,
-	visible: true,
-	draw: function() {
-		if (! this.visible) return;
-		this.at(0,50).by(400,260);
-		Screen.as(this).gray().frame().font("16px Arial").style('italic');
-		Screen.at(this.x,this.y-25).print("Newscript VM");
-		Screen.at(this.x+10,this.y+20).print("tos:" + defed(NS.tos)).to(200,0).print("utl:" + defed(NS.utl));
-		Screen.at(this.x+10,this.y+40).print("nos:" + defed(NS.nos)).to(200,0).print("cnt:" + defed(NS.cnt));
-		Screen.at(this.x+10,this.y+60).print("ds0:" + defed(NS.ds[NS.ds.length-1])).to(200,0).print("rs0:" + defed(NS.rs[NS.rs.length-1]));
-		Screen.at(this.x+10,this.y+80).print("ds1:" + defed(NS.ds[NS.ds.length-2])).to(200,0).print("rs1:" + defed(NS.rs[NS.rs.length-2]));
-		Screen.at(this.x+10,this.y+100).print("ds2:" + defed(NS.ds[NS.ds.length-3])).to(200,0).print("rs2:" + defed(NS.rs[NS.rs.length-3]));
-		Screen.at(this.x+10,this.y+120).print("ds3:" + defed(NS.ds[NS.ds.length-4])).to(200,0).print("rs3:" + defed(NS.rs[NS.rs.length-4]));
-		Screen.at(this.x+10,this.y+140).print("ds4:" + defed(NS.ds[NS.ds.length-5])).to(200,0).print("rs4:" + defed(NS.rs[NS.rs.length-5]));
-		Screen.at(this.x+10,this.y+160).print("ds5:" + defed(NS.ds[NS.ds.length-6])).to(200,0).print("rs5:" + defed(NS.rs[NS.rs.length-6]));
-		Screen.at(this.x+10,this.y+200).print("src:" + defed(NS.src)).to(200,0).print("dst:" + defed(NS.dst));
-		Screen.at(this.x+10,this.y+220).print("ip :" + defed(NS.ip)).to(200,0).print("mem:" + defed(NS.mem.length));
-	},
 	colorizer: function(t) {
-		var re = /^\d+$/;
+		var re = /^((#[a-f0-9]+)|\d)+$/;
 		Screen.red();
 		if (re.exec(t)) Screen.blue()
-		if (NS.opcodes[t]) Screen.orange();
 		if (NS.lexicon[t]) {
 			Screen.black();
 			NS.word = t;
@@ -231,6 +231,8 @@ var NS = Newscript = let(Widget,{
 			})) return true;
 			return false;
 		})) Screen.green();
+		if (NS.lexicon['Macro'][t]) Screen.purple();
+		if (NS.lexicon['Core'][t]) Screen.orange();
 	},
 	load: function(n) {
 		if (NSDefinitions[n]) 
@@ -243,6 +245,7 @@ var NS = Newscript = let(Widget,{
 		var b = NS.empty.to(20,0).clone();
 		o.each(function(v,i) {
 			d = d ? d.sibling = Definition.init(b): Definition.init(b);
+			Editor.definitions.push(d);
 			d.populate( first ? n : false, i, v, o.hasOwnProperty('_comments') ? o['_comments'][i] : '');
 			if (first)  {
 				NSDefinitions[n] = d;
@@ -256,15 +259,79 @@ var NS = Newscript = let(Widget,{
 	},
 });
 
-var Memory = let(Widget, {
-	x: -1480,
-	y: 50,
-	w: 1140,
-	h: 660,
+var Registers = let(Widget, {
+	x: 0,
+	y: 20,
+	w: 300,
+	h: 500,
 	init: function() { return this.instance() },
 	draw: function() {
-		if (!NS.visible) return;
-		Screen.as(this).gray().frame().style('italic').font("16px Arial");
+		if (! this.visible) return;
+		this.at(0,25).by(400,220);
+		Screen.as(this).gray().frame().font("16 Arial").style('italic');
+		Screen.at(this.x+10,this.y+10).print("tos:" + defed(NS.tos())).at(this.x + 200,this.y+10).print("rs0:" + defed(NS.utl));
+		Screen.at(this.x+10,this.y+30).print("nos:" + defed(NS.nos())).at(this.x + 200,this.y+30).print("rs1:" + defed(NS.cnt));
+		Screen.at(this.x+10,this.y+50).print("ds2:" + defed(NS.ds[7&(NS.dsi-2)])).at(this.x + 200,this.y+50).print("rs2:" + defed(NS.rtos()));
+		Screen.at(this.x+10,this.y+70).print("ds3:" + defed(NS.ds[7&(NS.dsi-3)])).at(this.x + 200,this.y+70).print("rs3:" + defed(NS.rs[7&(NS.rsi-1)]));
+		Screen.at(this.x+10,this.y+90).print("ds4:" + defed(NS.ds[7&(NS.dsi-4)])).at(this.x + 200,this.y+90).print("rs4:" + defed(NS.rs[7&(NS.rsi-2)]));
+		Screen.at(this.x+10,this.y+110).print("ds5:" + defed(NS.ds[7&(NS.dsi-5)])).at(this.x + 200,this.y+110).print("rs5:" + defed(NS.rs[7&(NS.rsi-3)]));
+		Screen.at(this.x+10,this.y+130).print("ds6:" + defed(NS.ds[7&(NS.dsi-6)])).at(this.x + 200,this.y+130).print("rs6:" + defed(NS.rs[7&(NS.rsi-4)]));
+		Screen.at(this.x+10,this.y+150).print("ds7:" + defed(NS.ds[7&(NS.dsi-7)])).at(this.x + 200,this.y+150).print("rs7:" + defed(NS.rs[7&(NS.rsi-5)]));
+		Screen.at(this.x+10,this.y+170).print("src:" + defed(NS.src)).at(this.x + 200,this.y+170).print("cnt:" + defed(NS.cnt));
+		Screen.at(this.x+10,this.y+190).print("dst:" + defed(NS.dst)).at(this.x + 200,this.y+190).print("utl:" + defed(NS.utl));
+	},
+});	
+
+var Lexicon = let(Widget, {
+	x: -320,
+	y: 25,
+	w: 300,
+	h: 660,
+	compile: null, 
+	reset: null,
+	init: function() {
+		this.compile = Image.init('/images/compile.png'),
+		this.reset = Image.init('/images/reset.png'),
+		this.onMouse('down');
+		return this.instance();
+	},
+	down: function(e) {
+		if (Box.init().as(this).to(0,this.h).by(100,30).hit(e)) return NS.init();
+		if (Box.init().as(this).to(this.w-100,this.h).by(100,30).hit(e)) return NS.compileLexicon();
+	},
+	draw: function() {
+		if (!this.visible) return;
+		var slots = 0;
+		NS.lexicon.each(function(v,k) { slots += 1 + v.slots() });
+		this.at(-320,25).by(300,20 + slots * 20);
+		Screen.as(this).gray().frame().to(0,this.h).by(100,30).draw(this.reset).to(this.w-100,0).draw(this.compile);
+		var i = 0;
+		NS.lexicon.each(function(v,k) {
+			Screen.as(Lexicon).black().font("16 Arial").to(10,i*20+10).print(k);
+			Screen.as(Lexicon).blue().font("16 Arial").to(220,i*20+10).print(""+v._address);
+			++i;
+			v.each(function(vv,kk) {
+				Screen.font("16 Arial")[ k == "Core" ? "orange" : k == "Macro" ? "purple" : "green" ]().as(Lexicon).to(30,i*20+10).print(kk);
+				if (typeof(vv) == "function")
+					Screen.font("16 Arial").black().as(Lexicon).to(220,i*20+10).print("[code]");
+				if (typeof(vv) == "string")
+					Screen.font("16 Arial").purple().as(Lexicon).to(220,i*20+10).print("[macro]");
+				if (typeof(vv) != "function")
+					Screen.font("16 Arial").blue().as(Lexicon).to(220,i*20+10).print(""+vv);
+				++i;
+			});
+		});
+	},
+});
+
+var Memory = let(Widget, {
+	x: -1480,
+	y: 25,
+	w: 1140,
+	h: 660,
+	init: function() { return Screen.widgets.push(this); this.draw(); },
+	draw: function() {
+		Screen.as(this).gray().frame().style('italic').font("16 Arial");
 		Screen.at(this.x,this.y-25).print("Newscript Memory @ " + defed(NS.ip));
 		var off = NS.ip / 128;
 		for (var i = 0; i < 32; ++i) 
@@ -273,42 +340,6 @@ var Memory = let(Widget, {
 	},
 });
 
-var Lexicon = let(Widget, {
-	x: -320,
-	y: 50,
-	w: 300,
-	h: 660,
-	compile: Image.init('/images/compile.png'),
-	reset:  Image.init('/images/reset.png'),
-	init: function() {
-		this.onMouse('down');
-		return this.instance();
-	},
-	down: function(e) {
-		if (Box.init().as(this).to(0,this.h).by(100,30).hit(e)) return NS.reset();
-		if (Box.init().as(this).to(this.w-100,this.h).by(100,30).hit(e)) return NS.compileLexicon();
-	},
-	draw: function() {
-		if (!NS.visible) return;
-		var slots = 0;
-		NS.lexicon.each(function(v,k) { slots += 1 + v.slots() });
-		this.at(-320,50).by(300,20 + slots * 20);
-		Screen.as(this).to(0,-25).gray().style('italic').font("16px Arial").print("Current Lexicon:");
-		Screen.as(this).gray().frame().to(0,this.h).by(100,30).draw(this.reset).to(this.w-100,0).draw(this.compile);
-		var i = 0;
-		NS.lexicon.each(function(v,k) {
-			Screen.as(Lexicon).black().font("16px Arial").to(10,i*20+10).print(k);
-			Screen.as(Lexicon).blue().font("16px Arial").to(220,i*20+10).print(""+v._address);
-			++i;
-			v.each(function(vv,kk) {
-				Screen.font("16px Arial").green().as(Lexicon).to(30,i*20+10).print(kk);
-				Screen.font("16px Arial").blue().as(Lexicon).to(220,i*20+10).print(""+vv);
-				++i;
-			});
-		});
-	},
-});
-
-var NS = Newscript.instance().hide();
-Lexicon.init();
 Memory.init();
+Registers.init();
+Lexicon.init();

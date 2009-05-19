@@ -16,6 +16,10 @@ var Event = let({
 		ev.key = Keyboard.map(e.keyCode, e.type == 'keydown');
 		ev.x = e.clientX - _root.currentTranslate.x;
 		ev.y = e.clientY - _root.currentTranslate.y;
+		if (e.touches && e.touches.length) {
+		 	ev.x = e.touches[0].clientX - _root.currentTranslate.x;
+		 	ev.y = e.touches[0].clientY - _root.currentTranslate.y;
+		}
 		ev.dx = e.wheelDeltaX / 40;
 		ev.dy = e.wheelDeltaY / 40;
 		return ev;

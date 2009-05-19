@@ -9,6 +9,7 @@ var Display = let(Box, {
 	init: function() {
 		Keyboard.init();
 		Mouse.init();
+		Touch.init();
 		this.by(window.innerWidth, window.innerHeight);	
 		this.at(0,0);
 		return this;

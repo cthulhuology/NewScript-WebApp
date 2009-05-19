@@ -14,14 +14,15 @@ var Definition = let(Widget,{
 	comment: null,
 	sibling: null,
 	visible: true,
-	icon: Image.init('/images/define.png'),
+	icon: null, 
 	init: function(b) {
 		var d = Definition.clone();
+		d.icon = Image.init('/images/define.png'),
 		d.as(b);
 		b.by(400,20);
 		d.verb = Text.init().as(b).colorize(Newscript.colorizer).setDefault(Definition.defaults['verb']);
 		d.code = Text.init().as(b).setDefault(Definition.defaults['code']).colorize(Newscript.colorizer);
-		d.comment = Text.init().as(b).italic().color(128,128,128).font("16pt Arial").setDefault(Definition.defaults['comment']);
+		d.comment = Text.init().as(b).italic().color(128,128,128).font("16 Arial").setDefault(Definition.defaults['comment']);
 		d.resize();
 		return d.instance();
 	},
@@ -39,8 +40,7 @@ var Definition = let(Widget,{
 	down: function(e) {
 		Box.as(this).to(this.w-100,0).by(100,30);
 		this.walk(function(d) { Box.to(0,d.h) });
-		if (Box.hit(e) && this.title)
-			NS.define(this);
+		if (Box.hit(e) && this.title) NS.define(this);
 	},
 	draw: function() {
 		Screen.as(this).gray().frame();
@@ -51,7 +51,7 @@ var Definition = let(Widget,{
 			Screen.draw(this.icon);
 		}
 		this.resize();
-		Screen.as(this)[this.within(Editor.selected) ? 'green' : 'gray']().frame();
+		Screen.as(this)[this.within(Editor.selected) ? 'green' : Editor.dragging == this ? 'blue' : 'gray']().frame();
 	},
 	upcase: function() {
 		var t = this.title.content();
@@ -83,13 +83,20 @@ var Definition = let(Widget,{
 		this.code.at(Box.x+16,Box.y+this.verb.h).by(Box.w-16,this.code.h);
 		this.comment.at(Box.x+20,Box.y+this.verb.h+this.code.h).by(Box.w-20,this.comment.h);
 		this.at(Box.x,Box.y).by(Box.w,this.verb.h+this.code.h+this.comment.h);
-		if (this.sibling) {
-			this.sibling.at(Box.x,Box.y + this.h).by(this.w,this.h);
-			this.sibling.resize();
-		}
+		if (this.sibling) this.sibling.at(Box.x,Box.y + this.h).by(this.w,this.h).resize();
 		return this;
 	},
 	define: function() { Keyboard.alt ? Javascript.define(this) : Newscript.define(this); },
+	superordinate: function() {
+		if (this.title) return this;
+		this.setTitle('An Object');
+		return this;
+	},
+	subordinate: function() {
+		this.title.release();
+		this.title = false;
+		return this;
+	},
 	release: function() {
 		if (this.title) this.title.release();
 		this.verb.release();

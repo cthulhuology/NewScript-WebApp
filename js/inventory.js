@@ -32,9 +32,7 @@ var Inventory = let({
 			var wc = Math.floor((Display.w-100) / 200);
 			var j = 0;
 			o.every(function(v,i) {
-				if (Sources[v.title]) {
-					return Sources[v.title].id = v.id;
-				}
+				if (Sources[v.title]) return Sources[v.title].id = v.id;
 				var s = Source.icon(v).as(b);
 				Inventory.icons.push(s);
 				Sources[v.title] = s;
@@ -43,5 +41,4 @@ var Inventory = let({
 			});
 		});
 	},	
-
 });

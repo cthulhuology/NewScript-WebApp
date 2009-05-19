@@ -23,8 +23,8 @@ var Text = let(Widget,{
 		if (!this.visible) return;
 		if (this.fill) Screen.as(this).color(this.fill.r,this.fill.g,this.fill.b).fill();
 		if (this.stroke) Screen.color(this.stroke.r,this.stroke.g,this.stroke.b);
-		Screen.as(this).to(4,0).style(this.style).font("16px Arial").colorize(this.colorizer).print(this.data).colorize(false);
-		this.by(Math.max(this.w,this.longest()),Math.max(this.h,Screen.y - Display.y-this.y+20));
+		Screen.as(this).to(4,0).style(this.style).font("16 Arial").colorize(this.colorizer).print(this.data).colorize(false);
+		this.by(Math.max(this.w,this.longest()),Math.max(this.h,Screen.y-this.y));
 		if (this.frame) Screen.as(this).gray().frame();
 	},
 	longest: function() {
@@ -56,13 +56,14 @@ var Text = let(Widget,{
 		if (this.data.last() == "_") this.data.pop();
 		if (Keyboard.backspace) {
 			var last = this.data.pop();
+			if (last.length == 0) return this.data.push("_");
 			this.data.push(last && typeof(last.substring) == "function" ? last.substring(0,last.length-1) : "");
-			if (this.data.last().length == 0) this.data.pop();
 			this.data.push("_");
 			return;
 		} 
 		if (k == " ") {
-			this.data.push([""]);
+			if (this.data.last().length == 0) return;
+			this.data.push("");
 			this.data.push("_");
 			return;
 		}

@@ -6,8 +6,8 @@
 // required by all 
 //
 
-var _doc;
-var _root;
+var _doc = document;
+var _root = _doc.documentElement;
 var _svgns = 'http://www.w3.org/2000/svg';
 var _xlinkns = 'http://www.w3.org/1999/xlink';
 

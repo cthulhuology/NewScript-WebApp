@@ -6,7 +6,7 @@
 
 var Icon = let(Button, {
 	down: function(e) {
-		if (this.hit(e)) 
+		if (this.hit(e))  
 			Welcome.icon = this.img;
 	}
 });
@@ -48,7 +48,7 @@ var Welcome = let(Widget,{
 		Screen.as(b).to(64,30).print("please select an icon:");
 		b.to(0,100);
 		Welcome.icons.every(function(x,i) {
-			x.as(b);
+			x.at(b.x,b.y).by(48,48);
 			b.to(100,0);
 			if (i % 5 == 4) b.to(-500,50);
 		});
@@ -68,7 +68,6 @@ var Welcome = let(Widget,{
 		Channel.init(UserID);
 		Inventory.load();
 		Welcome.release();
-		NS.show();
 		return true;
 	},
 	release: function() {

@@ -33,7 +33,7 @@ var User = let(Button, {
 		this.at(Display.w-48,25+ this.index*80).by(48,48);
 		Screen.as(this).draw(this.img);
 		if (this.label) 
-			Screen.as(this).to(this.w/2-(this.label.length*16),this.h/2).gray().style('italic').font("16px Arial").print(this.label);
+			Screen.as(this).to(this.w/2-(this.label.length*16),this.h/2).gray().style('italic').font("16 Arial").print(this.label);
 	},
 	move: function(e) {
 		this.label = this.hit(e) ? this.name : false ;

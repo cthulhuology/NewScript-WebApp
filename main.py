@@ -17,7 +17,7 @@ from google.appengine.ext import db
 
 ###
 # Resources
-sources = [ 'fundamentals','storage','box','widget','device','keyboard','mouse','display',
+sources = [ 'fundamentals','storage','box','widget','device','keyboard','mouse','touch','display',
 	'image','button','screen','text','event','base64','compiler','firth','definition',
 	'javascript','newscript','user','welcome','channel','inventory','help','editor' ]
 
@@ -142,11 +142,12 @@ class SidebarHandler(webapp.RequestHandler):
 <li><a href="javascript:goto('todo');">To Do List</a></li>
 <li><a href="javascript:tutorials()">Tutorials</a></li>
 <li><a href="javascript:goto('documentation')">Documentation</a></li>
+<li><a href="http://groups.google.com/group/newscript-devel">Discussion Group</a></li>
 </ul>
 <h4>Development News</h4>
 <ul>
 """)
-		titles = DiaryPost.all().order('-when').fetch(5)
+		titles = DiaryPost.all().order('-when').fetch(25)
 		for i in titles:
 			self.response.out.write(Template("""
 <li><a href="javascript:diary('${id}')">${title}</a></li>""").substitute(id=quote_plus(i.title),title=i.title.split(' -')[0]))

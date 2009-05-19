@@ -14,7 +14,7 @@ var Screen = let({
 	timer: null,
 	timers: [],
 	widgets: [],
-	size: '16px',
+	size: '16',
 	family: 'Arial',
 	colorizer: false,
 	fg: "none",
@@ -100,18 +100,32 @@ var Screen = let({
 		d.setAttribute('width',this.w);
 		d.setAttribute('height',this.h);
 		d.setAttribute('xml:space', 'preserve');
+		var row = $_('tspan');
+		var dx = 0;
+		var rowi = 1;
+		d.appendChild(row);
 		a.every(function(x,i) {
+			dx += x.length*Screen.size /2;  
+			if (dx > Screen.w) {
+				row = $_('tspan');
+				dx = 0;
+				++rowi;
+				row.setAttribute('x',Screen.x);
+				row.setAttribute('dy',Screen.size);
+				d.appendChild(row);
+			}
 			var s = $_('tspan');
 			var t = _doc.createTextNode(x + " " );
 			if (typeof(Screen.colorizer) == "function") 
 				Screen.colorizer(x);
-			s.setAttribute('font-size',Screen.size);
+			s.setAttribute('font-size',Screen.size + "px");
 			s.setAttribute('font-family',Screen.family);
 			s.setAttribute('font-style',Screen.fontstyle);
 			s.setAttribute('fill',Screen.fg);
 			s.appendChild(t);
-			d.appendChild(s);
+			row.appendChild(s);
 		});
+		Screen.y += rowi*Screen.size;
 		return this.add(d);
 	},
 	draw: function (img) {
@@ -164,9 +178,10 @@ var Screen = let({
 	},
 	animate: function() {
 		this.clear();
-		Box.at(-_root.currentTranslate.x, -_root.currentTranslate.y).by(Display.w,Display.h);
 		this.widgets.every(function(w,i) {
-			w.draw();
+			Box.at(-_root.currentTranslate.x-Display.w, -_root.currentTranslate.y - Display.h).by(Display.w*3,Display.h*3);
+			if (Box.hit(w)) 
+				w.draw();
 		});
 		for (var i = 0; i <this.timers.length; ++i) if (typeof(this.timers[i].timer) == "function") this.timers[i].timer();
 		this.timer = setTimeout("Screen.animate()",this.delay);

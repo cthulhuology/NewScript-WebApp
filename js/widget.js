@@ -15,8 +15,8 @@ var Widget = let(Box, {
 	remove: function() {
 		var $self = this;
 		this.hide();
-		this.events.keyboard.every(function(v,i) { $self.offKey(v); });
-		this.events.mouse.every(function(v,i) { $self.offMouse(v); });
+		this.events.keyboard.every(function(v,i) { $self.offKey(v) });
+		this.events.mouse.every(function(v,i) { $self.offMouse(v) });
 		Screen.widgets.expunge(this);
 		return this;
 	},

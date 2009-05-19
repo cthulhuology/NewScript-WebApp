@@ -13,6 +13,7 @@ var Editor = let(Widget, {
 	count: 0,
 	users: [],
 	selected: [],
+	dragging: false,
 	source: false, 
 	definitions: [],
 	mousex: 0, mousey: 0, mouseb: false,
@@ -22,15 +23,15 @@ var Editor = let(Widget, {
 	visible: false,
 	draw: function() {
 		if (!this.visible) return;
+		if (this.dragging) { 
+			this.mode = "dragging";
+			return this.dragging.at(this.mousex,this.mousey).draw();
+		}
 		if (this.mode == "define") 
 			for (var i = 0; i < this.h/80; ++i)
 				Screen.at(this.x,this.y+i*80).by(this.w,80).gray().frame();
 		if (this.mode == "text")
 			Screen.as(this).gray().frame();
-		if (this.mode == "merge")
-			Screen.as(this).blue().line();
-		if (this.mode == "cut")
-			Screen.as(this).red().line();
 	},
 	init: function() {
 		Display.init();
@@ -38,8 +39,8 @@ var Editor = let(Widget, {
 		this.labels = [ 
 			Text.init().at(-16000,-16000).by(Display.w,20).color(255,255,255).background(128,128,128).set("Javascript Scratchpad"),
 			Text.init().at(16000,16000).by(Display.w,20).color(255,255,255).background(128,128,128).set("Object Inventory"),
-			Text.init().at(0,0).by(Display.w,20).color(255,255,255).background(128,128,128).set("Newscript Editor"),
-			Text.init().at(-1480,0).by(1180,20).color(255,255,255).background(128,128,128).set("Newscript Emulator"),
+			Text.init().at(0,0).by(Display.w,20).color(255,255,255).background(128,128,128).set("Newscript VM"),
+			Text.init().at(-1480,0).by(1180,20).color(255,255,255).background(128,128,128).set("Newscript Memory"),
 			Text.init().at(-320,0).by(320,20).color(255,255,255).background(128,128,128).set("Newscript Lexicon"),
 			Text.init().at(-16000,16000).by(Display.w,20).color(255,255,255).background(128,128,128).set("Newscript Help & Documentation"),
 			Text.init().at(16000,-16000).by(Display.w,20).color(255,255,255).background(128,128,128).set("Newscript Timeline (ToDo)"),
@@ -49,34 +50,34 @@ var Editor = let(Widget, {
 		Storage.init();
 		Welcome.init();
 		Help.init();
+		NS.init();
 		return this.instance();
 	},
 	down: function(e) {
 		this.show();
 		this.at(e.x,e.y).by(0,0);
 		this.mouseb = true;
+		this.select_one();
 	},
 	move: function(e) {
 		this.mousex = e.x; this.mousey = e.y;
 		if (this.mouseb)
-			this.mode = (e.x > this.x && e.y > this.y ) ? 
-				 ( Keyboard.shift ? "cut" : "text" ):
-			 (e.x < this.x && e.y > this.y) ?
-				( Keyboard.shift ? "cut" : "define" ):
-			(e.y < this.y) ?
-				( Keyboard.shift ? "cut" : "merge" ):
+			this.mode = (e.x > this.x && e.y > this.y ) ? "text" :
+			 (e.x < this.x && e.y > this.y) ? "define" :
 			"none";
 		if (this.visible)
 			(this.mode == "define") ?
 				this.at(e.x+20,this.y).by(400,80 * (1 + Math.floor((e.y - this.y)/80))):
 				this.by(e.x - this.x,e.y - this.y);
 		this.select();
-		if (this.mode == "merge" && !this.source)  {
-			this.source = this.selected[0];
-			this.selected = [];
-		}
 	},
 	up: function(e) {
+		if (this.dragging && !this.dragging.within(this.selected)) {
+			if (this.selected.last())
+				this.selected.last().sibling = this.dragging.subordinate();
+			this.mode = "none";
+		}
+		this.dragging = false;
 		this.mouseb = false;
 		(this.mode == "define") ?
 			this.by(400,80 * (1 + Math.floor((e.y - this.y)/80))):
@@ -84,20 +85,29 @@ var Editor = let(Widget, {
 		this.hide();
 		this.action();
 	},
+	select_one: function () {
+		Box.at(this.mousex,this.mousey).by(0,0);
+		var last = false;
+		var sel = function(t,z) {
+			var retval = false;
+			t.walk(function(x,y) {
+				if (!x || typeof(x.hit) != "function") return;
+				if (! x.hit(Box)) return last = x;
+				last.sibling = false;
+				Editor.dragging = x.superordinate();
+				return retval = true;
+			});
+			return retval;
+		};
+		if (this.definitions.any(sel)) return;
+	},
 	select: function() {
 		Box.at(this.mousex,this.mousey).by(0,0);
 		this.selected = [];
 		this.definitions.any(function(t,z) {
 			for (var d = t; d; d = d.sibling) 
 				if (typeof(d.hit) == "function" && d.hit(Box)) {
-					t.walk(function(x) { Editor.selected.push(x) });
-					return true;
-				}
-			return false;
-		});
-		NSDefinitions.any(function(t,z) {
-			for (var d = t; d; d = d.sibling) 
-				if (d.isa(Box) && d.hit(Box)){
+					if (d == Editor.dragging) return;
 					t.walk(function(x) { Editor.selected.push(x) });
 					return true;
 				}
@@ -119,8 +129,8 @@ var Editor = let(Widget, {
 				(e.key == "j") ? Display.at(16000,16000):    // Javascript space
 				(e.key == "h") ? Display.at(16000,-16000):    // Help space
 				(e.key == "n") ? Display.at(-16000,16000):    // Newscript space
-				(e.key == "l") ? Display.at(-Lexicon.x,50-Lexicon.y):
-				(e.key == "m") ? Display.at(-Memory.x,50-Memory.y):
+				(e.key == "l") ? Display.at(-Lexicon.x,25-Lexicon.y):
+				(e.key == "m") ? Display.at(-Memory.x,25-Memory.y):
 				(e.key == "o") ? Display.at(0,0):		// Origin
 				(e.key == "z") ? Screen.widgets.pop():		// Undo
 				(e.key == "d") ? this.selected[0].define():	// Define
@@ -131,53 +141,15 @@ var Editor = let(Widget, {
 	},
 	release: function(e) {},
 	none: function() {}, // Do nothing
-	cut: function() { // Push to edit stack
-		Box.at(Editor.w < 0 ? Editor.x + Editor.w : Editor.x, Editor.y+Editor.h).by(Editor.w<0? -Editor.w : Editor.w, -Editor.h);
-		Screen.as(Box).red().frame();
-		var y = this.selected[0];
-		for(var x = y; x; x = y.sibling) {
-			if (!Box.hit(x))  {
-				y = x;
-				continue;
-			}
-			if (x.title && x.sibling) {
-				NSDefinitions[x.title.clean().content()] = x.sibling;
-				x.sibling.setTitle(x.title.content());
-				x.sibling.onMouse('move','down');
-				
-			} 
-			y.sibling = x.sibling;
-			x.sibling = false;
-			x.at(0,0).by(0,0).release();
-		}
-		this.selected = [];
-	},
-	merge: function() {
-		if (this.selected.length > 0) {
-			var d = this.selected[0];
-			if (this.source == this.selected[0]) return;
-			var o = null;
-			d.walk(function(x) { o = x });
-			o.sibling = this.source;
-			this.source.title.release();
-			this.source.title = false;
-			this.source.offMouse('down','move');
-			d.resize();
-		}
-		this.source = false;
-		this.selected = [];
-	},
 	define: function() { // Create a new Definition
 		for (var i = 0; i < this.h / 80; ++i) {
-			this.definitions.push(Definition.init(Box.at(this.x,this.y).by(400,80)));
-			if (i == 0) this.definitions[ this.definitions.length -1].setTitle('An Object');
-			if (i > 0) this.definitions[this.definitions.length-2].sibling = this.definitions[this.definitions.length-1];
+			var d = Definition.init(Box.at(this.x,this.y).by(400,80));
+			if (i == 0) d.superordinate();
+			if (i > 0) this.definitions.last().sibling = d;
+			this.definitions.push(d);
 			this.to(0,80);
 		}
 		return this;
-	},
-	add: function() { // Add a new slot
-
 	},
 	text: function() {  // New Text Box
 		if (this.w < 20 || this.h < 20) return;
@@ -185,6 +157,3 @@ var Editor = let(Widget, {
 		return this;
 	},
 });
-
-// Editor.init();
-
