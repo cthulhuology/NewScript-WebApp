@@ -17,50 +17,97 @@ var NSStored = {};
 
 var Macro = let({ });
 
-var Core = let({
-	','    : function() { NS.down() },					// #82
-	';'    : function() { NS.snos(NS.tos()); NS.down() },			// #83
-	'>r'   : function() { NS.upr(NS.tos()); NS.down() },			// #84
-	'~'    : function() { NS.stos(~NS.tos()) },				// #85
-	'&'    : function() { NS.snos(NS.tos() & NS.nos()); NS.down() },	// #86
-	'|'    : function() { NS.snos(NS.tos() | NS.nos()); NS.down() },	// #87
-	'\\'   : function() { NS.snos(NS.tos() ^ NS.nos()); NS.down() },	// #88
-	'@'    : function() { NS.stos(NS.mem[NS.tos]) },			// #89
-	'<'    : function() { NS.up(NS.nos() < NS.tos() ? -1 : 0) },		// #8a
-	'='    : function() { NS.up(NS.nos() == NS.tos() ? -1 : 0) },		// #8b
-	'<<'   : function() { NS.stos(Math.floor(NS.tos << 1)) },		// #8c
-	'<<<'  : function() { NS.stos(Math.floor(NS.tos() << 8)) },		// #8d
-	'0'    : function() { NS.up(0) },					// #8e
-	'1'    : function() { NS.up(1) },					// #8f
-	'.'    : function() { NS.ip = NS.rtos(); NS.downr() },			// #90
-	'?'    : function() { if (NS.nos()) NS.ip = NS.tos(); NS.down(); NS.down() }, // #91
-	':'    : function() { NS.up(NS.tos()) },				// #92
-	'^'    : function() { NS.up(NS.nos()) },				// #93
-	'r>'   : function() { NS.up(NS.rtos()); NS.downr() },			// #94
-	'-'    : function() { NS.stos(-NS.tos()) },				// #95
-	'+'    : function() { NS.snos(NS.tos() + NS.nos()); NS.down() },	// #96
-	'*'    : function() { NS.snos(Math.floor(NS.tos() * NS.nos())); NS.down() },	// #97
-	'/'    : function() { var b = NS.tos(); var a = NS.nos(); NS.stos(Math.floor(a / b)); NS.snos(a % b)}, // #98
-	'!'    : function() { NS.mem[NS.tos()] = NS.nos(); NS.down() },		// #99
-	'>'    : function() { NS.up(NS.nos() > NS.tos() ? -1 : 0) },		// #9a
-	'~='   : function() { NS.up(NS.nos() != NS.tos() ? -1 : 0); },		// #9b
-	'>>'   : function() { NS.stos(Math.floor(NS.tos() >> 1)) },		// #9c
-	'>>>'  : function() { NS.stos(Math.floor(NS.tos() >> 8)) },		// #9d
-	'@u'   : function() { NS.up(NS.utl) },					// #9e
-	'-1'   : function() { NS.up(-1) },					// #9f
-	'<-'   : function() { for(var i = 0; i < NS.cnt; ++i) NS.mem[NS.dst--] = NS.mem[NS.src--] },	// #a0
-	'@#'   : function() { NS.up(NS.cnt) },					// #a1
-	'@$'   : function() { NS.up(NS.src) },					// #a2
-	'@%'   : function() { NS.up(NS.dst) },					// #a3
-	'=='   : function() { for(var i = 0; i < NS.cnt; ++i) 			// #c0
+var Opcodes = let({
+	0x80 : function() { },
+	0x81 : function() { NS.upr(NS.ip); NS.ip = NS.tos(); NS.down() },
+	0x82 : function() { NS.down() },
+	0x83 : function() { NS.snos(NS.tos()); NS.down() },
+	0x84 : function() { NS.upr(NS.tos()); NS.down() },
+	0x85 : function() { NS.stos(~NS.tos()) },
+	0x86 : function() { NS.snos(NS.tos() & NS.nos()); NS.down() },
+	0x87 : function() { NS.snos(NS.tos() | NS.nos()); NS.down() },
+	0x88 : function() { NS.snos(NS.tos() ^ NS.nos()); NS.down() },
+	0x89 : function() { NS.stos(NS.mem[NS.tos]) },	
+	0x8a : function() { NS.up(NS.nos() < NS.tos() ? -1 : 0) },
+	0x8b : function() { NS.up(NS.nos() == NS.tos() ? -1 : 0) },
+	0x8c : function() { NS.stos(Math.floor(NS.tos << 1)) },
+	0x8d : function() { NS.stos(Math.floor(NS.tos() << 8)) },
+	0x8e : function() { NS.up(0) },
+	0x8f : function() { NS.up(1) },
+	0x90 : function() { NS.ip = NS.rtos(); NS.downr() },
+	0x91 : function() { if (NS.nos()) NS.ip = NS.tos(); NS.down(); NS.down() },
+	0x92 : function() { NS.up(NS.tos()) },
+	0x93 : function() { NS.up(NS.nos()) },
+	0x94 : function() { NS.up(NS.rtos()); NS.downr() },
+	0x95 : function() { NS.stos(-NS.tos()) },
+	0x96 : function() { NS.snos(NS.tos() + NS.nos()); NS.down() },	
+	0x97 : function() { NS.snos(Math.floor(NS.tos() * NS.nos())); NS.down() },
+	0x98 : function() { var b = NS.tos(); var a = NS.nos(); NS.stos(Math.floor(a / b)); NS.snos(a % b)},
+	0x99 : function() { NS.mem[NS.tos()] = NS.nos(); NS.down() },
+	0x9a : function() { NS.up(NS.nos() > NS.tos() ? -1 : 0) },
+	0x9b : function() { NS.up(NS.nos() != NS.tos() ? -1 : 0); },
+	0x9c : function() { NS.stos(Math.floor(NS.tos() >> 1)) },	
+	0x9d : function() { NS.stos(Math.floor(NS.tos() >> 8)) },	
+	0x9e : function() { NS.up(NS.utl) },
+	0x9f : function() { NS.up(-1) },	
+	0xa0 : function() { for(var i = 0; i < NS.cnt; ++i) NS.mem[NS.dst--] = NS.mem[NS.src--] },
+	0xa1 : function() { NS.up(NS.cnt) },
+	0xa2 : function() { NS.up(NS.src) },
+	0xa3 : function() { NS.up(NS.dst) },
+	0xc0 : function() { for(var i = 0; i < NS.cnt; ++i) 
 			if (NS.byte(NS.src++) != NS.byte(NS.dst++)) return NS.cnt; NS.cnt = 0 },
-	'#'    : function() { ++NS.cnt },					// #c1
-	'$'    : function() { NS.up(NS.mem[NS.src++]) },			// #c2
-	'%'    : function() { NS.mem[NS.dst++] = NS.tos() },			// #c3
-	'->'   : function() { for(var i = 0; i < NS.cnt; ++i) NS.mem[NS.dst++] = NS.mem[NS.src++] },	// #e0
-	'!#'   : function() { NS.cnt = NS.tos() },				// #e1
-	'!$'   : function() { NS.src = NS.tos() },				// #e2
-	'!%'   : function() { NS.dst = NS.tos() },				// #e3
+	0xc1 : function() { ++NS.cnt },	
+	0xc2 : function() { NS.up(NS.mem[NS.src++]) },
+	0xc3 : function() { NS.mem[NS.dst++] = NS.tos() },
+	0xe0 : function() { for(var i = 0; i < NS.cnt; ++i) NS.mem[NS.dst++] = NS.mem[NS.src++] },
+	0xe1 : function() { NS.cnt = NS.tos() },	
+	0xe2 : function() { NS.src = NS.tos() },	
+	0xe3 : function() { NS.dst = NS.tos() },
+});
+
+var Core = let({
+	','    : 0x82,
+	';'    : 0x83,
+	'>r'   : 0x84,
+	'~'    : 0x85,
+	'&'    : 0x86,
+	'|'    : 0x87,
+	'\\'   : 0x88,
+	'@'    : 0x89,
+	'<'    : 0x8a,
+	'='    : 0x8b,
+	'<<'   : 0x8c,
+	'<<<'  : 0x8d,
+	'0'    : 0x8e,
+	'1'    : 0x8f,
+	'.'    : 0x90,
+	'?'    : 0x91,
+	':'    : 0x92,
+	'^'    : 0x93,
+	'r>'   : 0x94,
+	'-'    : 0x95,
+	'+'    : 0x96,
+	'*'    : 0x97,
+	'/'    : 0x98,
+	'!'    : 0x99,
+	'>'    : 0x9a,
+	'~='   : 0x9b,
+	'>>'   : 0x9c,
+	'>>>'  : 0x9d,
+	'@u'   : 0x9e,
+	'-1'   : 0x9f,
+	'<-'   : 0xa0,
+	'@#'   : 0xa1,
+	'@$'   : 0xa2,
+	'@%'   : 0xa3,
+	'=='   : 0xc0,
+	'#'    : 0xc1,
+	'$'    : 0xc2,
+	'%'    : 0xc3,
+	'->'   : 0xe0,
+	'!#'   : 0xe1,
+	'!$'   : 0xe2,
+	'!%'   : 0xe3,
 });
 
 var NS = Newscript = let({
@@ -100,18 +147,44 @@ var NS = Newscript = let({
 	evaluator: function(txt) {
 		var words = txt.clean().data;
 		var x = NS.ip =  NS.free;
+		var last = null;
 		words.every(function(v,i) {
 			if (typeof(NS.lexicon['Macro'][v]) == "number") {
 				NS.upr(null);
 				NS.ip = NS.lexicon['Macro'][v];
-				return NS.execute();
-			}
-			if (v != "" && v != null)
-				NS.mem[x++] = v;
+				return NS.exec();
+			} else if (typeof(NS.lexicon['Core'][v]) == "number") {
+				NS.mem[x++] = NS.lexicon['Core'][v];	// Literal opcode
+			} else if (typeof(NS.lexicon[v]) == "object") {
+				last = v;
+			} else if (last && typeof(NS.lexicon[last][v]) == "number") {
+				NS.mem[x++] = NS.lexicon[last][v] & 0x7fffffff;
+				NS.mem[x++] = 0x00000081;
+			} else if (typeof(v) == "string" 
+				&& (typeof(parseInt(v)) == "number")) 
+				if (v.charAt(0) == "#")
+					NS.mem[x++] = 0x7fffffff & (parseInt('0x' + NS.mem[NS.ip].substr(1)));
+				else
+					NS.mem[x++] = 0x7fffffff & (parseInt(NS.mem[NS.ip]));
 		});
-		NS.mem[x] = null; // nullify the last field in memory
+		NS.mem[x++] = 0x1000;
+		NS.mem[x++] = 0x81; // jump past end to stop
 		NS.ip = NS.free;
-		NS.execute();
+		NS.exec();
+	},
+	exec: function() {
+		while(NS.ip >= 0 && NS.ip < 0x1000) {
+			var instr = NS.mem[NS.ip++];
+			if (!(instr & 0x80000000)) { // Literal
+				NS.up(instr);
+			} else {
+				while(instr & 0xff) {
+					if (typeof(Opcodes[instr&0xff]) == "function")
+						Opcodes[instr&0xff]();
+					instr >>= 8;
+				}
+			}
+		}
 	},
 	execute: function() {
 		while (NS.ip >= 0) {

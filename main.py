@@ -155,7 +155,7 @@ class SidebarHandler(webapp.RequestHandler):
 </ul>
 <h4>Contact</h4>
 <ul>
-<li><a href="mailto:dave@nexttolast.com">Dave - Project Designer</a></li>
+<li><a href="http://blog.dloh.org/">Dave - Project Designer</a></li>
 </ul>
 """)
 
