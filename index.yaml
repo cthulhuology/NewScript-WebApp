@@ -16,14 +16,14 @@ indexes:
   - name: id
   - name: when
 
-# Used 6 times in query history.
+# Used 10 times in query history.
 - kind: NSChannelMsg
   properties:
   - name: id
   - name: when
     direction: desc
 
-# Used 12 times in query history.
+# Used 20 times in query history.
 - kind: NSDefinition
   properties:
   - name: cid
@@ -35,7 +35,7 @@ indexes:
   - name: id=
   - name: title
 
-# Used once in query history.
+# Unused in query history -- copied from input.
 - kind: NSDefinition
   properties:
   - name: oid

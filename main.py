@@ -76,88 +76,7 @@ class NSText(db.Model):
 
 class IndexHandler(webapp.RequestHandler):
 	def get(self):
-		self.redirect('/html/index.html')
-
-class TutorialHandler(webapp.RequestHandler):
-	def get(self):
-		tutorials = TutorialPost.all().order('when').fetch(100)
-		self.response.out.write("<h4>NewScript Tutorials</h4><dl>")
-		for t in tutorials:
-			self.response.out.write(Template("""<dt>${title}</dt><dd>${blurb}</dd>""").substitute(title=t.title,blurb=t.blurb))
-		self.response.out.write("</dl>")
-
-class TutorialEditorHandler(webapp.RequestHandler):
-	def get(self):
-		u = users.get_current_user()
-		us = NSUser.all().filter('user =',u).fetch(1)
-		if not us or us[0].admin != 'true':
-			return self.redirect('/')
-		self.response.out.write("""<form method="post"><input type="text" name="title" size="120"><textarea name="blurb" rows="20" cols="80"></textarea><input type="submit" value="post"></form>""")
-	def post(self):
-		u = users.get_current_user()
-		us = NSUser.all().filter('user =',u).fetch(1)
-		if not us or  us[0].admin != 'true':
-			return self.redirect('/')
-		TutorialPost(title=self.request.get('title'),blurb=self.request.get('blurb')).put()
-		return self.redirect('/')
-
-class DiaryHandler(webapp.RequestHandler):
-	def get(self):
-		self.response.headers['Content-Type'] = 'text/html'
-		title = unquote_plus(self.request.path_info.split('/')[-1])
-		diaries = DiaryPost.all().filter('title =',title).fetch(1) 
-		for d in diaries:
-			self.response.out.write(Template("""<h4>${title}</h4>${blurb}""").substitute(title=d.title,blurb=d.blurb))
-	def post(self):
-		u = users.get_current_user()
-		us = NSUser.all().filter('user =',u).fetch(1)
-		if not us or us[0].admin != 'true':
-			return self.redirect('/')
-		dp = DiaryPost(user=u,title=datetime.datetime.now().strftime('%a %b %d %Y - ') + self.request.get('title'),blurb=self.request.get('blurb'))
-		dp.put()
-		self.redirect('/')
-
-class DiaryEditorHandler(webapp.RequestHandler):
-	def get(self):
-		u = users.get_current_user()
-		us = NSUser.all().filter('user =',u).fetch(1)
-		if not us or us[0].admin != 'true':
-			return self.redirect('/')
-		self.response.out.write("""
-<html><head><title>NewScript.org Diary Editor</title></head><body>
-<form action="/diary/" method="POST"><table>
-<tr><td><input type="text" name="title" size="120"></td></tr>
-<tr><td><textarea name="blurb" cols="120" rows="100"></textarea></td></tr>
-<tr><td><p align="right"><input type="submit" value="Publish"></td></tr>
-</table></form></body></html>""")
-
-class SidebarHandler(webapp.RequestHandler):
-	def get(self):
-		self.response.out.write("""
-<h4>Main Menu</h4>
-<ul>
-<li><a href="javascript:goto('home');">NewScript.org</a></li>
-<li><a href="/ns/">NewScript Beta</a></li>
-<li><a href="javascript:goto('faq');">F.A.Q.</a></li>
-<li><a href="javascript:goto('todo');">To Do List</a></li>
-<li><a href="javascript:tutorials()">Tutorials</a></li>
-<li><a href="javascript:goto('documentation')">Documentation</a></li>
-<li><a href="http://groups.google.com/group/newscript-devel">Discussion Group</a></li>
-</ul>
-<h4>Development News</h4>
-<ul>
-""")
-		titles = DiaryPost.all().order('-when').fetch(25)
-		for i in titles:
-			self.response.out.write(Template("""
-<li><a href="javascript:diary('${id}')">${title}</a></li>""").substitute(id=quote_plus(i.title),title=i.title.split(' -')[0]))
-		self.response.out.write("""
-</ul>
-<h4>Contact</h4>
-<ul>
-<li><a href="http://blog.dloh.org/">Dave - Project Designer</a></li>
-</ul>
-""")
+		self.redirect('/ns/')
 
 class WelcomeHandler(webapp.RequestHandler):
 	def get(self):
@@ -261,11 +180,6 @@ var UserID = '${userid}';
 def main():
 	application = webapp.WSGIApplication([
 					('/', IndexHandler),
-					('/sidebar/',SidebarHandler),
-					('/diary/edit/',DiaryEditorHandler),
-					('/diary/.*',DiaryHandler),
-					('/tutorials/edit/.*',TutorialEditorHandler),
-					('/tutorials/.*',TutorialHandler),
 					('/ns/', AppHandler),
 					('/ns/help/', HelpHandler),
 					('/ns/welcome/',WelcomeHandler),

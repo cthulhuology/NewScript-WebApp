@@ -144,74 +144,73 @@ var NS = Newscript = let({
 	name: "Newscript",
 	empty:  Box.init().at(400,50),
 	lexicon: {},
+	slot: 0,
+	indx: 0,
+	pad: function() {
+		while (NS.slot) { 
+			NS.mem[NS.indx] |= 0x80 << (8*NS.slot);
+			NS.slot = (++NS.slot & 3);
+			if (NS.slot == 0) ++NS.indx;
+		}
+	},
 	evaluator: function(txt) {
 		var words = txt.clean().data;
-		var x = NS.ip =  NS.free;
+		NS.indx = NS.ip = NS.free;
+		NS.slot = 0;
 		var last = null;
 		words.every(function(v,i) {
+			if (v == undefined) return;
 			if (typeof(NS.lexicon['Macro'][v]) == "number") {
 				NS.upr(null);
 				NS.ip = NS.lexicon['Macro'][v];
 				return NS.exec();
 			} else if (typeof(NS.lexicon['Core'][v]) == "number") {
-				NS.mem[x++] = NS.lexicon['Core'][v];	// Literal opcode
+			//	alert('compiling ' + v + ' => ' + NS.lexicon['Core'][v]);	
+				NS.mem[NS.indx] |= (NS.lexicon['Core'][v] &0xff) << (8*NS.slot);
+				NS.slot = (++NS.slot & 3);
+				if (NS.slot == 0) ++NS.indx;
 			} else if (typeof(NS.lexicon[v]) == "object") {
+		//		alert('object to ' + v );
 				last = v;
 			} else if (last && typeof(NS.lexicon[last][v]) == "number") {
-				NS.mem[x++] = NS.lexicon[last][v] & 0x7fffffff;
-				NS.mem[x++] = 0x00000081;
+		//		alert('compiling verb ' + v + ' => ' + NS.lexicon[last][v]);
+				NS.pad();
+				NS.mem[NS.indx++] = NS.lexicon[last][v] & 0x7fffffff;
+				NS.mem[NS.indx++] = 0x80808081;
 			} else if (typeof(v) == "string" 
-				&& (typeof(parseInt(v)) == "number")) 
-				if (v.charAt(0) == "#")
-					NS.mem[x++] = 0x7fffffff & (parseInt('0x' + NS.mem[NS.ip].substr(1)));
-				else
-					NS.mem[x++] = 0x7fffffff & (parseInt(NS.mem[NS.ip]));
+				&& (typeof(parseInt(v)) == "number"))  {
+			//	alert('Compiling literal ' + v);
+				NS.pad();
+				NS.mem[NS.indx++] = v.charAt(0) == "#" ?
+					0x7fffffff & (parseInt('0x' + v.substr(1))):
+					0x7fffffff & parseInt(v);
+			}
 		});
-		NS.mem[x++] = 0x1000;
-		NS.mem[x++] = 0x81; // jump past end to stop
+		NS.pad();
+		NS.mem[NS.indx++] = 0x1000;
+		NS.mem[NS.indx++] = 0x80808081; // jump past end to stop
 		NS.ip = NS.free;
 		NS.exec();
 	},
 	exec: function() {
 		while(NS.ip >= 0 && NS.ip < 0x1000) {
 			var instr = NS.mem[NS.ip++];
+		//	alert('instr is ' + instr);
+			if (instr == undefined) return;
 			if (!(instr & 0x80000000)) { // Literal
+		//		alert('push literal ' + instr);
 				NS.up(instr);
 			} else {
+		//		alert('eval instructions ');
 				while(instr & 0xff) {
-					if (typeof(Opcodes[instr&0xff]) == "function")
-						Opcodes[instr&0xff]();
-					instr >>= 8;
+		//			alert("opcode "+(instr&0xff)+" : " + typeof(Opcodes[instr&0xff]));
+					typeof(Opcodes[instr&0xff]) == "function" ? 
+						Opcodes[instr&0xff]():
+						(NS.ip = 0x1000);
+					instr = (instr >> 8) & 0x00ffffff;
 				}
 			}
 		}
-	},
-	execute: function() {
-		while (NS.ip >= 0) {
-			if (typeof(NS.lexicon['Core'][NS.mem[NS.ip]]) == "function") {
-				var i = NS.ip++;
-				NS.lexicon['Core'][NS.mem[i]]();
-				continue;
-			}
-			if (typeof(NS.lexicon[NS.mem[NS.ip]]) == "object") {
-				NS.upr(NS.ip + 2);
-				NS.ip = NS.lexicon[NS.mem[NS.ip]][NS.mem[NS.ip+1]];
-				continue;
-			}
-			if (typeof(NS.mem[NS.ip]) == "string" 
-			&& (typeof(parseInt(NS.mem[NS.ip])) == "number")) {
-				if (NS.mem[NS.ip].charAt(0) == "#")
-					NS.up(parseInt('0x' + NS.mem[NS.ip].substr(1)));
-				else
-					NS.up(parseInt(NS.mem[NS.ip]));
-				++NS.ip;
-				continue;
-			}
-			if (NS.mem[NS.ip] != null)
-				alert("Instruction at: " + NS.ip + " unknown: " + NS.mem[NS.ip]);
-			NS.ip = -1; // On error quit evaluating
-		}
-		NS.ip = NS.free;
 	},
 	init: function() {
 		Firth.reset();
@@ -342,8 +341,8 @@ var Registers = let(Widget, {
 		if (! this.visible) return;
 		this.at(0,25).by(400,220);
 		Screen.as(this).gray().frame().font("16 Arial").style('italic');
-		Screen.at(this.x+10,this.y+10).print("tos:" + defed(NS.tos())).at(this.x + 200,this.y+10).print("rs0:" + defed(NS.utl));
-		Screen.at(this.x+10,this.y+30).print("nos:" + defed(NS.nos())).at(this.x + 200,this.y+30).print("rs1:" + defed(NS.cnt));
+		Screen.at(this.x+10,this.y+10).print("tos:" + defed(NS.ds[7&(NS.dsi)])).at(this.x + 200,this.y+10).print("rs0:" + defed(NS.utl));
+		Screen.at(this.x+10,this.y+30).print("nos:" + defed(NS.ds[7&(NS.dsi-1)])).at(this.x + 200,this.y+30).print("rs1:" + defed(NS.cnt));
 		Screen.at(this.x+10,this.y+50).print("ds2:" + defed(NS.ds[7&(NS.dsi-2)])).at(this.x + 200,this.y+50).print("rs2:" + defed(NS.rtos()));
 		Screen.at(this.x+10,this.y+70).print("ds3:" + defed(NS.ds[7&(NS.dsi-3)])).at(this.x + 200,this.y+70).print("rs3:" + defed(NS.rs[7&(NS.rsi-1)]));
 		Screen.at(this.x+10,this.y+90).print("ds4:" + defed(NS.ds[7&(NS.dsi-4)])).at(this.x + 200,this.y+90).print("rs4:" + defed(NS.rs[7&(NS.rsi-2)]));
